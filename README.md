@@ -1,2 +1,2 @@
 # Maya-Python-Scripts
-Just a place to put Maya Python scripts I try to make
+Just a place to put random Maya Python scripts
