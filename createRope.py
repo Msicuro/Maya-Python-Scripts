@@ -69,3 +69,8 @@ def centerJoint(name):
     jnt = cmds.joint(p=((pos[0]+pos[3])/2, (pos[1] + pos[4])/2, (pos[2]+pos[5])/2), name="{}_JNT".format(name))
     cmds.select(sel, r=1)
     return jnt
+
+# TODO: Create curveLogic function that connects the curve shape node,
+#  locator, and curve bind joints with the needed utility nodes
+def curveLogic(curve_shape, locators, curve_bind_joints):
+    pass
