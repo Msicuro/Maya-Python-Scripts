@@ -22,8 +22,13 @@ def selectSpans(verts_in_span, joint_name):
 
 # TODO: Create locator function with joints from selectSpans() as the position points
 def addLocators(joints):
+    locators = []
     for i in joints:
-        cmds.spaceLocator()
+        loc = cmds.spaceLocator(name="{}".format(i).replace("JNT", "LOC"))
+        cmds.delete(cmds.pointConstraint(i, loc))
+        locators.append(loc)
+
+    return locators
 
 # TODO: Create curve function with joints from selectionSpans as the position points and skin to control joints
 def createCurve(control_joints, joints):
