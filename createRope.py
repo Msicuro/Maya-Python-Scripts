@@ -20,7 +20,7 @@ def selectSpans(verts_in_span, joint_name):
 
     return joints, spans
 
-# TODO: Create locator function with joints from selectSpans() as the position points
+
 def addLocators(joints):
     locators = []
     for i in joints:
@@ -30,9 +30,22 @@ def addLocators(joints):
 
     return locators
 
-# TODO: Create curve function with joints from selectionSpans as the position points and skin to control joints
-def createCurve(control_joints, joints):
-    pass
+
+def createCurve():
+    control_joints = cmds.ls(selection=True)
+    positions = []
+    curve_joints = []
+
+    for i in control_joints:
+        curve_joints.append(cmds.duplicate(i, name=i.replace("bind", "CTRL"))[0])
+        positions.append(cmds.xform(i, query=True, translation=True, worldSpace=True))
+
+    curve = cmds.curve(point=positions)
+
+    cmds.select(curve_joints, curve)
+    cmds.SmoothBindSkin()
+
+    return curve, positions, curve_joints
 
 def selectAllVerts():
     selection = cmds.ls(selection=True)
