@@ -4,6 +4,7 @@ def selectSpans(verts_in_span):
     all_verts = selectAllVerts()
 
     spans = []
+    joints = []
     num_of_spans = int(len(all_verts) / verts_in_span)
     inc = 0
 
@@ -11,10 +12,13 @@ def selectSpans(verts_in_span):
         spans.append([])
         for vert in range(verts_in_span):
             spans[i].append(all_verts[inc])
-            cmds.select(all_verts[inc])
+            cmds.select(all_verts[inc], add=True)
             inc += 1
-        centerJoint()
+
+        joints.append(centerJoint())
         cmds.select(clear=True)
+
+    return joints, spans
 
 
 def selectAllVerts():
