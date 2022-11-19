@@ -20,6 +20,13 @@ def selectSpans(verts_in_span):
 
     return joints, spans
 
+# TODO: Create locator function with joints from selectSpans() as the position points
+def addLocators(joints):
+    pass
+
+# TODO: Create curve function with joints from selectionSpans as the position points and skin to control joints
+def createCurve(control_joints, joints):
+    pass
 
 def selectAllVerts():
     selection = cmds.ls(selection=True)
