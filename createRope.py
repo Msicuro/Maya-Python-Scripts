@@ -57,15 +57,19 @@ def selectAllVerts():
 
 def centerJoint(name):
     """
-    Will create a joint based on the center of the current selection.
+    Will create a joint based on the center of the current selection. CREDIT: Script from Rigging Dojo
     :return jnt - string:
     """
     sel = cmds.ls(sl=1, fl=1)
+    # Get the bounding box transforms for the selection(s)
     pos = [cmds.xform(x, q=1, ws=1, bb=1) for x in sel]
     val = len(pos)
+    # Add the zipped positions together
     pos = [sum(e) for e in zip(*pos)]
+    # Divide the updated position by the total number of selected objects
     pos = [e/val for e in pos]
     cmds.select(cl=1)
+    # Divide the updated positions by 2 to get the final position (center of the bounding box of all the selected objects put together?)
     jnt = cmds.joint(p=((pos[0]+pos[3])/2, (pos[1] + pos[4])/2, (pos[2]+pos[5])/2), name="{}_JNT".format(name))
     cmds.select(sel, r=1)
     return jnt
