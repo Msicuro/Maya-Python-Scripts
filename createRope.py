@@ -74,7 +74,36 @@ def centerJoint(name):
     cmds.select(sel, r=1)
     return jnt
 
-# TODO: Create curveLogic function that connects the curve shape node,
-#  locator, and curve bind joints with the needed utility nodes
-def curveLogic(curve_shape, locators, curve_bind_joints):
-    pass
+# TODO: Move the parts under the For loop into a different function to save them as a dictionary
+# TODO: Delete the unnneeded nodes
+def setPositionPercentage(curve, curve_bind_joints, locators):
+    curve_shape = cmds.listRelatives(curve, shape=True)[0]
+
+    # Get the max arc length value of the curve
+    arc_len = cmds.createNode('arcLengthDimension', name='temp_delete_arcLen')
+    arc_len_translate = cmds.listRelatives(arc_len, parent=True)[0]
+
+    cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.nurbsGeometry'.format(arc_len))
+    cmds.connectAttr('{}.maxValue'.format(curve_shape), '{}.uParamValue'.format(arc_len))
+
+    total_length = cmds.getAttr('{}.arcLength'.format(arc_len))
+
+    # Create the motion path logic for each node
+    for i in range(len(locators)):
+        # Create the nodes and set/connect the appropriate attributes
+        nearest_point = cmds.createNode('nearestPointOnCurve')
+        cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.inputCurve'.format(nearest_point))
+        cmds.connectAttr('{}.translate'.format(locators[i]), '{}.inPosition'.format(nearest_point))
+
+        temp_arc_len = cmds.createNode('arcLengthDimension')
+        cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.nurbsGeometry'.format(temp_arc_len))
+        cmds.connectAttr('{}.parameter'.format(nearest_point), '{}.uParamValue'.format(temp_arc_len))
+        final_arc = cmds.getAttr('{}.arcLength'.format(temp_arc_len))
+
+        percentage_value = final_arc/total_length
+
+        motion_path = cmds.createNode('motionPath', name='{}_motionPath'.format(curve_bind_joints[i]))
+        cmds.setAttr('{}.fractionMode'.format(motion_path), True)
+        cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.geometryPath'.format(motion_path))
+        cmds.setAttr('{}.uValue'.format(motion_path), percentage_value)
+
