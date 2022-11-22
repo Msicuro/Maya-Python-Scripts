@@ -1,13 +1,28 @@
 from maya import cmds as cmds
 
+#################################
+##Steps to create a bridge rope##
+#################################
+# Use selectSpans to create joints at each span of a cylinder
+# Select the joints that will be used as the control joints (or select the spans that will be used to map the controls
+# Run the createCurve function
+# Run setPositionPercentage
+# Run attachToMotionPath
+
 def selectSpans(verts_in_span, joint_name):
+    """
+    Creates joints at center of the spans of a cylinder using the number of vertices that make up each span
+    """
     all_verts = selectAllVerts()
 
     spans = []
     joints = []
+    # Calculate the number of spans on the mesh
     num_of_spans = int(len(all_verts) / verts_in_span)
     inc = 0
 
+    # Select vertices in bulk based on vertices per span and create a joint at the center point before iterating
+    # to the next span
     for i in range(num_of_spans):
         spans.append([])
         for vert in range(verts_in_span):
@@ -15,13 +30,16 @@ def selectSpans(verts_in_span, joint_name):
             cmds.select(all_verts[inc], add=True)
             inc += 1
 
-        joints.append(centerJoint(name="{}_{}".format(joint_name, i)))
+        joints.append(centerJoint(name="{}_BIND_{}".format(joint_name, i)))
         cmds.select(clear=True)
 
     return joints, spans
 
 
 def addLocators(joints):
+    """
+    Creates locators at the selected positions
+    """
     locators = []
     for i in joints:
         loc = cmds.spaceLocator(name="{}".format(i).replace("JNT", "LOC"))
@@ -32,22 +50,31 @@ def addLocators(joints):
 
 
 def createCurve():
+    """
+    Creates a curve with points along the control joints/transforms
+    """
     control_joints = cmds.ls(selection=True)
     positions = []
     curve_joints = []
 
+    # Iterate through the control joints and save the positions to use for curve creation
     for i in control_joints:
-        curve_joints.append(cmds.duplicate(i, name=i.replace("bind", "CTRL"))[0])
+        curve_joints.append(cmds.duplicate(i, name=i.replace("BIND", "CTRL"))[0])
         positions.append(cmds.xform(i, query=True, translation=True, worldSpace=True))
 
+    # Create the curve with CVs at the positions of the control joints
     curve = cmds.curve(point=positions)
 
+    # Bind the control joints to the curve
     cmds.select(curve_joints, curve)
     cmds.SmoothBindSkin()
 
     return curve, positions, curve_joints
 
 def selectAllVerts():
+    """
+    Selects all vertices on a mesh
+    """
     selection = cmds.ls(selection=True)
     shape_node = cmds.listRelatives(selection, s=True)[0]
     all_vertices = cmds.ls('{}.vtx[*]'.format(shape_node), fl=True)
@@ -57,7 +84,8 @@ def selectAllVerts():
 
 def centerJoint(name):
     """
-    Will create a joint based on the center of the current selection. CREDIT: Script from Rigging Dojo
+    Will create a joint based on the center of the current selection.
+    CREDIT: Script from Rigging Dojo
     :return jnt - string:
     """
     sel = cmds.ls(sl=1, fl=1)
@@ -76,6 +104,9 @@ def centerJoint(name):
 
 
 def setPositionPercentage(curve, curve_bind_joints, locators):
+    """
+    Stores the arcLength for each corresponding joint on the curve into a dictionary
+    """
     joint_percentage_values = {}
     curve_shape = cmds.listRelatives(curve, shape=True)[0]
 
