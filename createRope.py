@@ -103,21 +103,24 @@ def centerJoint(name):
     return jnt
 
 
-def setPositionPercentage(curve, curve_bind_joints, locators):
+def setPositionPercentage(curve, curve_bind_joints):
     """
     Stores the arcLength for each corresponding joint on the curve into a dictionary
     """
+
     joint_percentage_values = {}
-    curve_shape = cmds.listRelatives(curve, shape=True)[0]
+    curve_shape = cmds.listRelatives(curve, shapes=True)[0]
 
     # Get the max arc length value of the curve
     arc_len = cmds.createNode('arcLengthDimension', name='temp_delete_arcLen')
-    arc_len_translate = cmds.listRelatives(arc_len, parent=True)[0]
+    arc_len_transform = cmds.listRelatives(arc_len, parent=True)[0]
 
     cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.nurbsGeometry'.format(arc_len))
     cmds.connectAttr('{}.maxValue'.format(curve_shape), '{}.uParamValue'.format(arc_len))
 
     total_length = cmds.getAttr('{}.arcLength'.format(arc_len))
+
+    cmds.delete(arc_len_transform)
 
     # Get the final percentage value on the curve for each joint and save to the dictionary
     for i in range(len(curve_bind_joints)):
@@ -131,6 +134,7 @@ def setPositionPercentage(curve, curve_bind_joints, locators):
         cmds.connectAttr('{}.translate'.format(temp_transform), '{}.inPosition'.format(temp_nearest_point))
 
         temp_arc_len = cmds.createNode('arcLengthDimension')
+        temp_arc_len_transform = cmds.listRelatives(temp_arc_len, parent=True)[0]
         cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.nurbsGeometry'.format(temp_arc_len))
         cmds.connectAttr('{}.parameter'.format(temp_nearest_point), '{}.uParamValue'.format(temp_arc_len))
         final_arc = cmds.getAttr('{}.arcLength'.format(temp_arc_len))
@@ -142,7 +146,7 @@ def setPositionPercentage(curve, curve_bind_joints, locators):
 
         cmds.delete(temp_transform)
         cmds.delete(temp_nearest_point)
-        cmds.delete(temp_arc_len)
+        cmds.delete(temp_arc_len_transform)
 
     return joint_percentage_values
 
@@ -150,7 +154,7 @@ def attachToMotionPath(joint_percentage_values, curve, curve_bind_joints):
     """
     Attaches a motion path node to the curve joints using the percentage value from setPositionPercentage()
     """
-    curve_shape = cmds.listRelatives(curve, shape=True)[0]
+    curve_shape = cmds.listRelatives(curve, shapes=True)[0]
     motion_paths = []
 
     # Iterate through each joint and attach the motion path node with the corresponding percentage value as the uValue
@@ -158,6 +162,8 @@ def attachToMotionPath(joint_percentage_values, curve, curve_bind_joints):
         motion_paths.append(cmds.createNode('motionPath', name='{}_motionPath'.format(curve_bind_joints[i])))
         cmds.setAttr('{}.fractionMode'.format(motion_paths[i]), True)
         cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.geometryPath'.format(motion_paths[i]))
-        cmds.setAttr('{}.uValue'.format(motion_paths[i]), joint_percentage_values[i])
+        cmds.setAttr('{}.uValue'.format(motion_paths[i]), joint_percentage_values[curve_bind_joints[i]])
 
         cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(curve_bind_joints[i]))
+
+    return motion_paths
