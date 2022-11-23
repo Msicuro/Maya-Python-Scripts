@@ -1,4 +1,4 @@
-from may import cmds
+from maya import cmds
 
 """
 1. Create the following groups:
