@@ -9,6 +9,12 @@ from maya import cmds as cmds
 # Run setPositionPercentage
 # Run attachToMotionPath
 
+# TODO: Improvements:Add duplicate joints in selectSpans to be used as the bind joint for the cylinder mesh
+# TODO: Improvements: Run the createLocators command in selectSpans to control the cylinder bind joints
+# TODO: Improvements: New Flow --> Create joints as mesh bind joints > Create locators at the same positions >
+#  Create x amount of control joints based on selection of the locators > Run the motionPath calculations on the locators
+#  > Parent or constrain the bind joints to the locators
+
 def selectSpans(verts_in_span, joint_name):
     """
     Creates joints at center of the spans of a cylinder using the number of vertices that make up each span
@@ -38,7 +44,7 @@ def selectSpans(verts_in_span, joint_name):
 
 def addLocators(joints):
     """
-    Creates locators at the selected positions
+    Creates locators at the selected positions based on a list of joints (or any selected objects with transforms)
     """
     locators = []
     for i in joints:
@@ -167,3 +173,18 @@ def attachToMotionPath(joint_percentage_values, curve, curve_bind_joints):
         cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(curve_bind_joints[i]))
 
     return motion_paths
+
+def createSupports(curve, bind_joints):
+    pass
+    # Run the selectSpans function separately to create all the joints
+    # Inside the createSupports function:
+        # Use the createLocator function to create locators at each bind joint
+        # Select the Outer joints, and the very middle joints as the control joints
+        # Parent the bind joints under the locators
+        # Connect the locators to the curve with nPOC nodes:
+            # Create a curveInfo node and connect the curve into the inputCurve attribute
+            # Iterate through the locators while doing the following:
+                # Create a nPOC node
+                # Connect the curve to the inputCurve attribute
+                # Connect the nPOC nodes positions attrubyte to the locators Translates
+                # Connect the nPOC nodes positions attrubyte to the locators Translates

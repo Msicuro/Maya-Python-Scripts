@@ -1,4 +1,4 @@
-import pymel.core as pm
+from may import cmds
 
 """
 1. Create the following groups:
@@ -18,26 +18,27 @@ import pymel.core as pm
 4. Parent geometry under the geo group
 """
 
-def createHierarchy(geometry=pm.ls(selection=True)):
+def createHierarchy(geometry=cmds.ls(selection=True)):
 
-    main = pm.group(empty=True, n='{}_Group'.format(str(geometry[0])))
-    world = pm.group(empty=True, n="World_Group")
-    rig = pm.group(empty=True, n="Rig_Group")
-    noxform = pm.group(empty=True, n="noXform_Group")
-    scale = pm.group(empty=True, n="Scale_Reader_Group")
-    geo = pm.group(empty=True, n="Geo_Group")
+    main = cmds.group(empty=True, n='{}_Group'.format(str(geometry[0])))
+    world = cmds.group(empty=True, n="World_Group")
+    rig = cmds.group(empty=True, n="Rig_Group")
+    noxform = cmds.group(empty=True, n="noXform_Group")
+    scale = cmds.group(empty=True, n="Scale_Reader_Group")
+    geo = cmds.group(empty=True, n="Geo_Group")
 
-    trs = pm.circle(c=[0,0,0], nr=[0,1,0], sw=360, r=3, d=3, ut=0, tol=0.01, s=8, ch=1, n="TRS_CTRL")
-    offset = pm.circle(c=[0, 0, 0], nr=[0, 1, 0], sw=360, r=1.5, d=3, ut=0, tol=0.01, s=8, ch=1, n="Offset_CTRL")
+    trs = cmds.circle(c=[0,0,0], nr=[0,1,0], sw=360, r=3, d=3, ut=0, tol=0.01, s=8, ch=1, n="TRS_CTRL")
+    offset = cmds.circle(c=[0, 0, 0], nr=[0, 1, 0], sw=360, r=1.5, d=3, ut=0, tol=0.01, s=8, ch=1, n="Offset_CTRL")
 
-    pm.parent(world, main)
-    pm.parent(trs, world)
-    pm.parent(offset, trs)
-    pm.parent(rig, offset)
-    pm.parent(noxform, rig)
-    pm.parent(scale, noxform)
-    pm.parent(geo, rig)
+    cmds.parent(world, main)
+    cmds.parent(trs, world)
+    cmds.parent(offset, trs)
+    cmds.parent(rig, offset)
+    cmds.parent(noxform, rig)
+    cmds.parent(scale, noxform)
+    cmds.parent(geo, rig)
 
-    pm.scaleConstraint(rig, scale)
+    cmds.scaleConstraint(rig, scale)
 
-    pm.parent(geometry, geo)
+    cmds.delete(cmds.parentConstraint(geometry, main))
+    cmds.parent(geometry, geo)
