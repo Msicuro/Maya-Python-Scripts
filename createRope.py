@@ -68,6 +68,10 @@ def createCurve():
         curve_joints.append(cmds.duplicate(i, name=i.replace("BIND", "CTRL"))[0])
         positions.append(cmds.xform(i, query=True, translation=True, worldSpace=True))
 
+    # Increase the size of the control joints
+    for i in curve_joints:
+        cmds.setAttr("{}.radius".format(i), 1.8)
+
     # Create the curve with CVs at the positions of the control joints
     curve = cmds.curve(point=positions)
 
