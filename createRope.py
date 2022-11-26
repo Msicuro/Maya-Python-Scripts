@@ -9,7 +9,6 @@ from maya import cmds as cmds
 # Run setPositionPercentage
 # Run attachToMotionPath
 
-# TODO: Improvements:Add duplicate joints in selectSpans to be used as the bind joint for the cylinder mesh
 # TODO: Improvements: Run the createLocators command in selectSpans to control the cylinder bind joints
 # TODO: Improvements: New Flow --> Create joints as mesh bind joints > Create locators at the same positions >
 #  Create x amount of control joints based on selection of the locators > Run the motionPath calculations on the locators
@@ -19,10 +18,10 @@ def selectSpans(verts_in_span, joint_name):
     """
     Creates joints at center of the spans of a cylinder using the number of vertices that make up each span
     """
-    all_verts = selectAllVerts()
+    all_verts, mesh = selectAllVerts()
 
     spans = []
-    joints = []
+    curve_follow_joints = []
     # Calculate the number of spans on the mesh
     num_of_spans = int(len(all_verts) / verts_in_span)
     inc = 0
@@ -36,10 +35,19 @@ def selectSpans(verts_in_span, joint_name):
             cmds.select(all_verts[inc], add=True)
             inc += 1
 
-        joints.append(centerJoint(name="{}_BIND_{}".format(joint_name, i)))
+        curve_follow_joints.append(centerJoint(name="{}_CURVE_{}".format(joint_name, i)))
         cmds.select(clear=True)
 
-    return joints, spans
+    # Create duplicate joints to use as bind joints for the mesh and bind them
+    mesh_bind_joints = []
+    for i in curve_follow_joints:
+        mesh_bind_joints.append(cmds.duplicate(i, name="{}".format(i).replace("CURVE", "BIND"))[0])
+
+    cmds.select(clear=True)
+    cmds.select(mesh_bind_joints, mesh)
+    cmds.SmoothBindSkin()
+
+    return curve_follow_joints, mesh_bind_joints, spans
 
 
 def addLocators(joints):
@@ -58,6 +66,9 @@ def addLocators(joints):
 def createCurve():
     """
     Creates a curve with points along the control joints/transforms
+
+    Note: Need to select the joints with "CURVE" in the name in order for naming to work correctly, need to add
+    a try+except or something to help with that
     """
     control_joints = cmds.ls(selection=True)
     positions = []
@@ -65,7 +76,7 @@ def createCurve():
 
     # Iterate through the control joints and save the positions to use for curve creation
     for i in control_joints:
-        curve_joints.append(cmds.duplicate(i, name=i.replace("BIND", "CTRL"))[0])
+        curve_joints.append(cmds.duplicate(i, name=i.replace("CURVE", "CTRL"))[0])
         positions.append(cmds.xform(i, query=True, translation=True, worldSpace=True))
 
     # Increase the size of the control joints
@@ -89,7 +100,7 @@ def selectAllVerts():
     shape_node = cmds.listRelatives(selection, s=True)[0]
     all_vertices = cmds.ls('{}.vtx[*]'.format(shape_node), fl=True)
 
-    return all_vertices
+    return all_vertices, selection
 
 
 def centerJoint(name):
