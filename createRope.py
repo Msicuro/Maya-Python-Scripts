@@ -9,7 +9,6 @@ from maya import cmds as cmds
 # Run setPositionPercentage
 # Run attachToMotionPath
 
-# TODO: Improvements: Run the createLocators command in selectSpans to control the cylinder bind joints
 # TODO: Improvements: New Flow --> Create joints as mesh bind joints > Create locators at the same positions >
 #  Create x amount of control joints based on selection of the locators > Run the motionPath calculations on the locators
 #  > Parent or constrain the bind joints to the locators
@@ -47,7 +46,12 @@ def selectSpans(verts_in_span, joint_name):
     cmds.select(mesh_bind_joints, mesh)
     cmds.SmoothBindSkin()
 
-    return curve_follow_joints, mesh_bind_joints, spans
+    # Create locators to attach above the mesh bind joints
+    locators = addLocators(mesh_bind_joints)
+    for i in range(len(locators)):
+        cmds.parent(mesh_bind_joints[i], locators[i])
+
+    return curve_follow_joints, locators, spans
 
 
 def addLocators(joints):
@@ -58,7 +62,7 @@ def addLocators(joints):
     for i in joints:
         loc = cmds.spaceLocator(name="{}".format(i).replace("JNT", "LOC"))
         cmds.delete(cmds.pointConstraint(i, loc))
-        locators.append(loc)
+        locators.append(loc[0])
 
     return locators
 
@@ -124,12 +128,12 @@ def centerJoint(name):
     return jnt
 
 
-def setPositionPercentage(curve, curve_bind_joints):
+def setPositionPercentage(curve, locators):
     """
     Stores the arcLength for each corresponding joint on the curve into a dictionary
     """
 
-    joint_percentage_values = {}
+    locator_percentage_values = {}
     curve_shape = cmds.listRelatives(curve, shapes=True)[0]
 
     # Get the max arc length value of the curve
@@ -143,11 +147,11 @@ def setPositionPercentage(curve, curve_bind_joints):
 
     cmds.delete(arc_len_transform)
 
-    # Get the final percentage value on the curve for each joint and save to the dictionary
-    for i in range(len(curve_bind_joints)):
-        #Create a temp transform node and move it to the joint position
+    # Get the final percentage value on the curve for each locator and save to the dictionary
+    for i in range(len(locators)):
+        #Create a temp transform node and move it to the locator position
         temp_transform = cmds.createNode('transform', name='temp_delete_transform')
-        cmds.delete(cmds.parentConstraint(curve_bind_joints[i], temp_transform))
+        cmds.delete(cmds.parentConstraint(locators[i], temp_transform))
 
         # Create the arcLength and nearestPoint nodes and set/connect the appropriate attributes
         temp_nearest_point = cmds.createNode('nearestPointOnCurve')
@@ -162,16 +166,16 @@ def setPositionPercentage(curve, curve_bind_joints):
 
         percentage_value = final_arc/total_length
 
-        #Save the percentage value of the corresponding joint to the dictionary
-        joint_percentage_values[curve_bind_joints[i]] = percentage_value
+        #Save the percentage value of the corresponding locator to the dictionary
+        locator_percentage_values[locators[i]] = percentage_value
 
         cmds.delete(temp_transform)
         cmds.delete(temp_nearest_point)
         cmds.delete(temp_arc_len_transform)
 
-    return joint_percentage_values
+    return locator_percentage_values
 
-def attachToMotionPath(joint_percentage_values, curve, curve_bind_joints):
+def attachToMotionPath(joint_percentage_values, curve, locators):
     """
     Attaches a motion path node to the curve joints using the percentage value from setPositionPercentage()
     """
@@ -179,13 +183,13 @@ def attachToMotionPath(joint_percentage_values, curve, curve_bind_joints):
     motion_paths = []
 
     # Iterate through each joint and attach the motion path node with the corresponding percentage value as the uValue
-    for i in range(len(curve_bind_joints)):
-        motion_paths.append(cmds.createNode('motionPath', name='{}_motionPath'.format(curve_bind_joints[i])))
+    for i in range(len(locators)):
+        motion_paths.append(cmds.createNode('motionPath', name='{}_motionPath'.format(locators[i])))
         cmds.setAttr('{}.fractionMode'.format(motion_paths[i]), True)
         cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.geometryPath'.format(motion_paths[i]))
-        cmds.setAttr('{}.uValue'.format(motion_paths[i]), joint_percentage_values[curve_bind_joints[i]])
+        cmds.setAttr('{}.uValue'.format(motion_paths[i]), joint_percentage_values[locators[i]])
 
-        cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(curve_bind_joints[i]))
+        cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(locators[i]))
 
     return motion_paths
 
