@@ -84,9 +84,12 @@ def createCurve():
         control_joints.append(centerJoint(name="{}".format(i.replace("LOC", "CTRL").replace("_BIND",""))))
         positions.append(cmds.xform(i, query=True, translation=True, worldSpace=True))
 
-    # Increase the size of the control joints
+    # Increase the size of the control joints and create a transform group above them
     for i in control_joints:
         cmds.setAttr("{}.radius".format(i), 1.8)
+        zero = cmds.group(empty=True, n="{}".format(i.replace("JNT", "ZERO_GRP")))
+        cmds.delete(cmds.parentConstraint(i, zero)[0])
+        cmds.parent(i, zero)
 
     # Create the curve with CVs at the positions of the control joints
     curve = cmds.curve(point=positions)
