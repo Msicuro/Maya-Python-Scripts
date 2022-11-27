@@ -74,8 +74,7 @@ def createCurve():
     cmds.select(clear=True)
     for i in control_transforms:
         cmds.select(i)
-        # TODO: Fix the control joint naming
-        control_joints.append(centerJoint(name="{}".format(i.replace("LOC", "CTRL"))))
+        control_joints.append(centerJoint(name="{}".format(i.replace("LOC", "CTRL").replace("_BIND",""))))
         positions.append(cmds.xform(i, query=True, translation=True, worldSpace=True))
 
     # Increase the size of the control joints
