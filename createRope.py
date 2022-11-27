@@ -11,7 +11,12 @@ from maya import cmds as cmds
 
 def selectSpans(verts_in_span, joint_name):
     """
-    Creates joints at center of the spans of a cylinder using the number of vertices that make up each span
+    Creates joints at center of each span of a cylinder using the number of vertices that make up each span
+    Args:
+        verts_in_span: The number of vertices that make up one span
+        joint_name: The preferred name for the newly created joints
+    Returns:
+        mesh_bind_joints, locators, spans
     """
     all_verts, mesh = selectAllVerts()
 
@@ -49,6 +54,10 @@ def selectSpans(verts_in_span, joint_name):
 def addLocators(joints):
     """
     Creates locators at the selected positions based on a list of joints (or any selected objects with transforms)
+    Args:
+        joints: Any joints or transforms for locator positions
+    Returns:
+        locators: A list of names of the created locators
     """
     locators = []
     for i in joints:
@@ -61,10 +70,8 @@ def addLocators(joints):
 
 def createCurve():
     """
-    Creates a curve with points along the control joints/transforms
-
-    Note: Need to select the joints with "CURVE" in the name in order for naming to work correctly, need to add
-    a try+except or something to help with that
+    Creates a curve with points along the selected control joints/transforms along with joints to use as controls
+    Returns: curve, positions, control_joints
     """
     control_transforms = cmds.ls(selection=True)
     positions = []
@@ -92,7 +99,7 @@ def createCurve():
 
 def selectAllVerts():
     """
-    Selects all vertices on a mesh
+    Selects and returns all vertices on a mesh
     """
     selection = cmds.ls(selection=True)
     shape_node = cmds.listRelatives(selection, s=True)[0]
@@ -103,9 +110,8 @@ def selectAllVerts():
 
 def centerJoint(name):
     """
-    Will create a joint based on the center of the current selection.
+    Will create a joint based on the center of the current selection(s).
     CREDIT: Script from Rigging Dojo
-    :return jnt - string:
     """
     sel = cmds.ls(sl=1, fl=1)
     # Get the bounding box transforms for the selection(s)
@@ -125,8 +131,13 @@ def centerJoint(name):
 def setPositionPercentage(curve, locators):
     """
     Stores the arcLength for each corresponding joint on the curve into a dictionary
-    """
+    Args:
+        curve:
+        locators: The transforms to determine the position on the curve
 
+    Returns:
+        locator_percentage_values: A list of the arcLen/percentage values on the curve of each transform
+    """
     locator_percentage_values = {}
     curve_shape = cmds.listRelatives(curve, shapes=True)[0]
 
@@ -171,7 +182,11 @@ def setPositionPercentage(curve, locators):
 
 def attachToMotionPath(joint_percentage_values, curve, locators):
     """
-    Attaches a motion path node to the curve joints using the percentage value from setPositionPercentage()
+    Attaches a motion path node to the locators above the mesh joints using the percentage value from setPositionPercentage()
+    Args:
+        joint_percentage_values: The percentage values of transforms along the curve taken from setPositionPercentage()
+        curve: The base curve
+        locators: The locators parented above the joints skinned to the mesh
     """
     curve_shape = cmds.listRelatives(curve, shapes=True)[0]
     motion_paths = []
