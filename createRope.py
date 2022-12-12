@@ -25,8 +25,8 @@ def selectSpans(verts_in_span, joint_name):
     # Calculate the number of spans on the mesh
     num_of_spans = int(len(all_verts) / verts_in_span)
 
-    # Select vertices in bulk based on vertices per span and create a joint at the center point before iterating
-    # to the next span
+    # Select vertices in bulk based on the number of vertices per span and create a joint at the center point before
+    # iterating to the next span
     inc = 0
     for i in range(num_of_spans):
         spans.append([])
@@ -205,17 +205,58 @@ def attachToMotionPath(joint_percentage_values, curve, locators):
 
     return motion_paths
 
-def createSupports(curve, bind_joints):
-    pass
+def createSupports(bind_joints, locators):
+    # Run selectSpans separately
+
+    # Select the outer and middle bind joints for the control joints using the bind joints created from selectSpans
+    cmds.select(clear=True)
+    ctrl_joints = []
+    cmds.select(bind_joints[0])
+    cmds.select(bind_joints[len(bind_joints) / 2], add=True)
+    cmds.select(bind_joints[-1], add=True)
+
+    # Create the curve with the selected control joints
+    curve, positions, ctrl_joints = createCurve()
+    cmds.select(clear=True)
+
+    curve_shape = cmds.listRelatives(curve, shapes=True)[0]
+
+    motion_paths = []
+    # Create the nPOC and motionPath nodes using the locators created from selectSpans
+    for i in range(len(locators)):
+        # Create the nPOC node and connect the locators translates to it
+        temp_nPOC = cmds.createNode('motionPath')
+        cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.inputCurve'.format(temp_nPOC))
+        cmds.connectAttr('{}.translate'.format(locators[i]), '{}.inPosition'.format(temp_nPOC))
+
+        # Create the motionPath node and connect the parameter value from the nPOC node into it
+        motion_paths.append(cmds.createNode('motionPath', name='{}_motionPath'.format(locators[i])))
+        cmds.setAttr('{}.fractionMode'.format(motion_paths[i]), True)
+        cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.geometryPath'.format(motion_paths[i]))
+        cmds.connectAttr('{}.parameter'.format(temp_nPOC), '{}.uValue'.format(motion_paths[i]))
+
+        # Delete the nPOC node to remove its connection from the locator
+        cmds.delete(temp_nPOC)
+
+        # Connect the motionPaths Coordinates attribute into the locator
+        cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(i[0]))
+
     # Run the selectSpans function separately to create all the joints
     # Inside the createSupports function:
-        # Use the createLocator function to create locators at each bind joint
-        # Select the Outer joints, and the very middle joints as the control joints
-        # Parent the bind joints under the locators
+        # X Use the createLocator function to create locators at each bind joint
+        # X Select the Outer joints, and the very middle joints as the control joints - Select [0], [-1], len()/2
+        # X (selectSpans already does this) Parent the bind joints under the locators
         # Connect the locators to the curve with nPOC nodes:
-            # Create a curveInfo node and connect the curve into the inputCurve attribute
             # Iterate through the locators while doing the following:
                 # Create a nPOC node
                 # Connect the curve to the inputCurve attribute
-                # Connect the nPOC nodes positions attrubyte to the locators Translates
-                # Connect the nPOC nodes positions attrubyte to the locators Translates
+                # Connect the nPOC nodes positions attribute to the locators Translates
+        # Create curveInfo node
+        # Attach curveInfo node to the curve
+
+        # for i in len(getAttr(curve_info_controlPoints)):
+        #     Create nPOC node
+        #     Create motionPath
+        #     Attach nPOC node to the curve
+        #     Attach motionPath node to the curve
+        #     Attach motionPath node to the locator of the current index
