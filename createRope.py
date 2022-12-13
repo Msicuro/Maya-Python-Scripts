@@ -212,7 +212,9 @@ def createSupports(bind_joints, locators):
     cmds.select(clear=True)
     ctrl_joints = []
     cmds.select(bind_joints[0])
+    cmds.select(bind_joints[(len(bind_joints) / 2) - 1], add=True)
     cmds.select(bind_joints[len(bind_joints) / 2], add=True)
+    cmds.select(bind_joints[(len(bind_joints) / 2) + 1], add=True)
     cmds.select(bind_joints[-1], add=True)
 
     # Create the curve with the selected control joints
@@ -228,12 +230,15 @@ def createSupports(bind_joints, locators):
         temp_nPOC = cmds.createNode('nearestPointOnCurve')
         cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.inputCurve'.format(temp_nPOC))
         cmds.connectAttr('{}.translate'.format(locators[i]), '{}.inPosition'.format(temp_nPOC))
+        param = cmds.getAttr('{}.parameter'.format(temp_nPOC))
 
         # Create the motionPath node and connect the parameter value from the nPOC node into it
         motion_paths.append(cmds.createNode('motionPath', name='{}_motionPath'.format(locators[i])))
         cmds.setAttr('{}.fractionMode'.format(motion_paths[i]), True)
         cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.geometryPath'.format(motion_paths[i]))
-        cmds.connectAttr('{}.parameter'.format(temp_nPOC), '{}.uValue'.format(motion_paths[i]))
+        print('Param: {}'.format(param))
+        print('Line 240 bug: {}'.format(motion_paths[i]))
+        cmds.setAttr('{}.uValue'.format(motion_paths[i]), param)
 
         # Delete the nPOC node to remove its connection from the locator
         cmds.delete(temp_nPOC)
