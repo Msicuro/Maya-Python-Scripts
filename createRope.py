@@ -225,7 +225,7 @@ def createSupports(bind_joints, locators):
     # Create the nPOC and motionPath nodes using the locators created from selectSpans
     for i in range(len(locators)):
         # Create the nPOC node and connect the locators translates to it
-        temp_nPOC = cmds.createNode('motionPath')
+        temp_nPOC = cmds.createNode('nearestPointOnCurve')
         cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.inputCurve'.format(temp_nPOC))
         cmds.connectAttr('{}.translate'.format(locators[i]), '{}.inPosition'.format(temp_nPOC))
 
@@ -239,7 +239,7 @@ def createSupports(bind_joints, locators):
         cmds.delete(temp_nPOC)
 
         # Connect the motionPaths Coordinates attribute into the locator
-        cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(i[0]))
+        cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(locators[i]))
 
     # Run the selectSpans function separately to create all the joints
     # Inside the createSupports function:
