@@ -211,18 +211,18 @@ def createSupports(bind_joints, locators):
     # Select the outer and middle bind joints for the control joints using the bind joints created from selectSpans
     cmds.select(clear=True)
     ctrl_joints = []
-    cmds.select(bind_joints[0])
-    cmds.select(bind_joints[(len(bind_joints) / 2) - 1], add=True)
-    cmds.select(bind_joints[len(bind_joints) / 2], add=True)
-    cmds.select(bind_joints[(len(bind_joints) / 2) + 1], add=True)
-    cmds.select(bind_joints[-1], add=True)
+    cmds.select(locators[0])
+    cmds.select(locators[(len(locators) / 2) - 1], add=True)
+    cmds.select(locators[len(locators) / 2], add=True)
+    cmds.select(locators[(len(locators) / 2) + 1], add=True)
+    cmds.select(locators[-1], add=True)
 
+    print('Selections: {}'.format(cmds.ls(selection=True)))
     # Create the curve with the selected control joints
     curve, positions, ctrl_joints = createCurve()
     cmds.select(clear=True)
 
     curve_shape = cmds.listRelatives(curve, shapes=True)[0]
-
     motion_paths = []
     # Create the nPOC and motionPath nodes using the locators created from selectSpans
     for i in range(len(locators)):
@@ -236,6 +236,7 @@ def createSupports(bind_joints, locators):
         motion_paths.append(cmds.createNode('motionPath', name='{}_motionPath'.format(locators[i])))
         cmds.setAttr('{}.fractionMode'.format(motion_paths[i]), True)
         cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.geometryPath'.format(motion_paths[i]))
+        print('Motion Path[{}]: {}'.format(i, motion_paths[i]))
         print('Param: {}'.format(param))
         print('Line 240 bug: {}'.format(motion_paths[i]))
         cmds.setAttr('{}.uValue'.format(motion_paths[i]), param)
