@@ -244,22 +244,10 @@ def createSupports(bind_joints, locators):
         # Connect the motionPaths Coordinates attribute into the locator
         cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(locators[i]))
 
-    # Run the selectSpans function separately to create all the joints
-    # Inside the createSupports function:
-        # X Use the createLocator function to create locators at each bind joint
-        # X Select the Outer joints, and the very middle joints as the control joints - Select [0], [-1], len()/2
-        # X (selectSpans already does this) Parent the bind joints under the locators
-        # Connect the locators to the curve with nPOC nodes:
-            # Iterate through the locators while doing the following:
-                # Create a nPOC node
-                # Connect the curve to the inputCurve attribute
-                # Connect the nPOC nodes positions attribute to the locators Translates
-        # Create curveInfo node
-        # Attach curveInfo node to the curve
-
-        # for i in len(getAttr(curve_info_controlPoints)):
-        #     Create nPOC node
-        #     Create motionPath
-        #     Attach nPOC node to the curve
-        #     Attach motionPath node to the curve
-        #     Attach motionPath node to the locator of the current index
+def bindPlanks():
+    # Select the vertices on each side of the plank
+    # Create a joint in the center on each side
+    # Bind the joints to the board
+    # Create a Buffer group above the joints
+    # Parent constrain the Buffer groups to the corresponding locator on the rope
+    pass
