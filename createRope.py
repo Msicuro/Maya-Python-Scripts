@@ -106,6 +106,8 @@ def selectAllVerts():
     """
     selection = cmds.ls(selection=True)
     shape_node = cmds.listRelatives(selection, s=True)[0]
+    # TODO: Add if statement to distinguish nurbSurfaces and Polygons:
+    # if cmds.objectType(nurb_shape, isType="nurbsSurface"):
     all_vertices = cmds.ls('{}.vtx[*]'.format(shape_node), fl=True)
 
     return all_vertices, selection
