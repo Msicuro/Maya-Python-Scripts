@@ -102,13 +102,19 @@ def createCurve():
 
 def selectAllVerts():
     """
-    Selects and returns all vertices on a mesh
+    Selects and returns all vertices on a mesh or nurbsSurface
     """
     selection = cmds.ls(selection=True)
     shape_node = cmds.listRelatives(selection, s=True)[0]
-    # TODO: Add if statement to distinguish nurbSurfaces and Polygons:
-    # if cmds.objectType(nurb_shape, isType="nurbsSurface"):
-    all_vertices = cmds.ls('{}.vtx[*]'.format(shape_node), fl=True)
+
+    if cmds.objectType(shape_node, isType="nurbsSurface"):
+        print "Selecting nurbs CVs"
+        all_vertices = cmds.ls('{}.cv[*][*]'.format(shape_node), fl=True)
+    elif cmds.objectType(shape_node, isType="mesh"):
+        print "Selecting mesh Vertices"
+        all_vertices = cmds.ls('{}.vtx[*]'.format(shape_node), fl=True)
+    else:
+        raise Exception("Wrong lever! (Lever as in node type, please select a nurbsSurface or mesh)")
 
     return all_vertices, selection
 
