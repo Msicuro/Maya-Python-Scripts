@@ -13,30 +13,48 @@ def selectSpans(verts_in_span, joint_name):
     """
     Creates joints at center of each span of a cylinder using the number of vertices that make up each span
     Args:
-        verts_in_span: The number of vertices that make up one span
+        verts_in_span: The number of vertices that make up one edge loop/span
         joint_name: The preferred name for the newly created joints
     Returns:
         mesh_bind_joints, locators, spans
     """
     all_verts, mesh = selectAllVerts()
 
+    shape_node = cmds.listRelatives(mesh, s=True)[0]
     spans = []
     mesh_bind_joints = []
-    # Calculate the number of spans on the mesh
-    num_of_spans = int(len(all_verts) / verts_in_span)
 
-    # Select vertices in bulk based on the number of vertices per span and create a joint at the center point before
-    # iterating to the next span
-    inc = 0
-    for i in range(num_of_spans):
-        spans.append([])
-        for vert in range(verts_in_span):
-            spans[i].append(all_verts[inc])
-            cmds.select(all_verts[inc], add=True)
-            inc += 1
+    # Calculate the number of spans
+    if cmds.objectType(shape_node, isType="nurbsSurface"):
+        # TODO: Test script on nurbsSurfaces and figure out how to deal with the first two spans
+        num_of_spans = len(cmds.ls('{}.cv[*][0]'.format(shape_node), fl=True)) - 2
+        span_range = len(cmds.ls('{}.cv[*][0]'.format(shape_node), fl=True))
+        for i in range(span_range):
+            vert_span = cmds.ls('{}.cv[{}][*]'.format(shape_node, i), fl=True)
+            cmds.select(vert_span)
+            mesh_bind_joints.append(centerJoint(name="{}_BIND_{}".format(joint_name, i)))
+            cmds.select(clear=True)
 
-        mesh_bind_joints.append(centerJoint(name="{}_BIND_{}".format(joint_name, i)))
-        cmds.select(clear=True)
+
+
+    elif cmds.objectType(shape_node, isType="mesh"):
+        num_of_spans = int(len(all_verts) / verts_in_span)
+
+        # Select vertices in bulk based on the number of vertices per span and create a joint at the center point before
+        # iterating to the next span
+        inc = 0
+        for i in range(num_of_spans):
+            spans.append([])
+            for vert in range(verts_in_span):
+                spans[i].append(all_verts[inc])
+                cmds.select(all_verts[inc], add=True)
+                inc += 1
+
+            mesh_bind_joints.append(centerJoint(name="{}_BIND_{}".format(joint_name, i)))
+            cmds.select(clear=True)
+
+    else:
+        raise Exception("Wrong lever! (Lever as in node type, please select a nurbsSurface or mesh)")
 
     # Create duplicate joints to use as bind joints for the mesh and bind them
     cmds.select(clear=True)
