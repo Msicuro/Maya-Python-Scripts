@@ -270,6 +270,41 @@ def createSupports(bind_joints, locators):
         # Connect the motionPaths Coordinates attribute into the locator
         cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(locators[i]))
 
+
+def setupNPOCPath(curve, locators):
+    curve_shape = cmds.listRelatives(curve, shapes=True)[0]
+    motion_paths = []
+    # Create the nPOC and motionPath nodes using the locators created from selectSpans
+    for i in range(len(locators)):
+        # Create the nPOC node and connect the locators translates to it
+        temp_nPOC = cmds.createNode('nearestPointOnCurve')
+        cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.inputCurve'.format(temp_nPOC))
+        cmds.connectAttr('{}.translate'.format(locators[i]), '{}.inPosition'.format(temp_nPOC))
+        param = cmds.getAttr('{}.parameter'.format(temp_nPOC))
+        # Delete the nPOC node to remove its connection from the locator
+        cmds.delete(temp_nPOC)
+
+        # Create the motionPath node and connect the parameter value from the nPOC node into it
+        motion_paths.append(cmds.createNode('motionPath', name='{}_motionPath'.format(locators[i])))
+        cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.geometryPath'.format(motion_paths[i]))
+        print('Motion Path[{}]: {}'.format(i, motion_paths[i]))
+        print('Param: {}'.format(param))
+        cmds.setAttr('{}.uValue'.format(motion_paths[i]), param)
+
+        # Connect the motionPaths Coordinates attribute into the locator
+        cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(locators[i]))
+def buildSupport():
+    pass
+    # Create bind joints on mesh
+    # Create 5 control joints, 3 for the ik and two to stay in between and manage the curve shape
+    # Create the curve with those 5 control joints
+    # Bind the control joints to the curve
+    # Add an IK handle to the first, middle and last control joints (these should be in the same hierarchy)
+    # Point constrain the remaining two joints (which should be separate) to the appropriate ik control joints
+    # Create a circle control (or any control shape) and move it to the center control joint and away
+    # Create a pole vector constraint with the control
+    #
+
 def bindPlanks():
     # Select the vertices on each side of the plank
     # Create a joint in the center on each side
