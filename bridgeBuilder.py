@@ -9,7 +9,7 @@ from maya import cmds as cmds
 # Run setPositionPercentage
 # Run attachToMotionPath
 
-def selectSpans(verts_in_span, joint_name):
+def selectSpans(verts_in_span, joint_name, bind=True):
     """
     Creates joints at center of each span of a cylinder using the number of vertices that make up each span
     Args:
@@ -56,10 +56,11 @@ def selectSpans(verts_in_span, joint_name):
     else:
         raise Exception("Wrong lever! (Lever as in node type, please select a nurbsSurface or mesh)")
 
-    # Create duplicate joints to use as bind joints for the mesh and bind them
-    cmds.select(clear=True)
-    cmds.select(mesh_bind_joints, mesh)
-    cmds.SmoothBindSkin()
+    # Bind the joints to the mesh unless stated otherwise
+    if bind:
+        cmds.select(clear=True)
+        cmds.select(mesh_bind_joints, mesh)
+        cmds.SmoothBindSkin()
 
     # Create locators to attach above the mesh bind joints
     locators = addLocators(mesh_bind_joints)
@@ -267,8 +268,11 @@ def createSupports(bind_joints, locators):
         print('Param: {}'.format(param))
         cmds.setAttr('{}.uValue'.format(motion_paths[i]), param)
 
-        # Connect the motionPaths Coordinates attribute into the locator
+        # Connect the motionPaths Coordinates and rotate attributes into the locator
         cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(locators[i]))
+        cmds.connectAttr('{}.rotateX'.format(motion_paths[i]), '{}.rotateX'.format(locators[i]))
+        cmds.connectAttr('{}.rotateY'.format(motion_paths[i]), '{}.rotateY'.format(locators[i]))
+        cmds.connectAttr('{}.rotateZ'.format(motion_paths[i]), '{}.rotateZ'.format(locators[i]))
 
 
 def setupNPOCPath(curve, locators):
