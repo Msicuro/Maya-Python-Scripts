@@ -297,17 +297,27 @@ def setupNPOCPath(curve, locators):
 
         # Connect the motionPaths Coordinates attribute into the locator
         cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(locators[i]))
-def buildSupport():
+def buildSupport(ctrl_joints):
     pass
     # Create bind joints on mesh
+        # Run selectSpans
     # Create 5 control joints, 3 for the ik and two to stay in between and manage the curve shape
     # Create the curve with those 5 control joints
     # Bind the control joints to the curve
+        # Run createCurve with the 5 joints selected
+    # Parent the last joint to the middle, and the middle to the top joint
+    ik_joints = ctrl_joints[::2]
+    middle_index = int(len(ik_joints) / 2)
+    cmds.parent(ik_joints[-1], ik_joints[middle_index])
+    cmds.parent(ik_joints[middle_index], ik_joints[0])
     # Add an IK handle to the first, middle and last control joints (these should be in the same hierarchy)
-    # Point constrain the remaining two joints (which should be separate) to the appropriate ik control joints
+    ik_handle = cmds.ikHandle(sj=ik_joints[0], ee=ik_joints[-1])
+    # Create Group nodes above the control joints
+    # Point constrain the remaining group nodes above the two joints (which should be separate) to the appropriate ik control joints
     # Create a circle control (or any control shape) and move it to the center control joint and away
     # Create a pole vector constraint with the control
     #
+
 
 def bindPlanks():
     # Select the vertices on each side of the plank
