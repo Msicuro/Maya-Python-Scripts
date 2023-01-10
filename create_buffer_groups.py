@@ -1,9 +1,6 @@
 import maya.cmds as cmds
 
-#Creates a Null, Zero and Buff group above the currently selected object at it's location
-
-def createThreeBufferGroups():
-	selection = cmds.ls(sl=True)
+def createThree(selection = cmds.ls(sl=True)):
 
 	for each in selection:
 	    grp1 = cmds.group(empty=True, n = each + "_NULL_GRP")
@@ -17,8 +14,7 @@ def createThreeBufferGroups():
 	    cmds.parent(grp2, grp1)
 	    cmds.makeIdentity(each, t=1, r=1,s=1, apply=True)
 
-def createTwoBufferGroups():
-	selection = cmds.ls(sl=True)
+def createTwo(selection = cmds.ls(sl=True)):
 
 	for each in selection:
 		grp1 = cmds.group(empty=True, n=each + "_NULL_GRP")
