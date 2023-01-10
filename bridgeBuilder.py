@@ -1,4 +1,5 @@
 from maya import cmds as cmds
+import create_buffer_groups as buffer
 
 #################################
 ##Steps to create a bridge rope##
@@ -313,7 +314,16 @@ def buildSupport(ctrl_joints):
     # Add an IK handle to the first, middle and last control joints (these should be in the same hierarchy)
     ik_handle = cmds.ikHandle(sj=ik_joints[0], ee=ik_joints[-1])
     # Create Group nodes above the control joints
+    buffer.createTwo(ik_joints[0])
+    buffer.createTwo(ctrl_joints[1::2])
     # Point constrain the remaining group nodes above the two joints (which should be separate) to the appropriate ik control joints
+    mid_joints = ctrl_joints[1::2]
+    inc = 0
+    for i in mid_joints:
+        top_parent = cmds.ls(i, long=True)[0].split('|')[1:-1][0]
+        cmds.pointConstraint(ik_joints[inc], ik_joints[inc + 1], top_parent)
+        inc += 1
+
     # Create a circle control (or any control shape) and move it to the center control joint and away
     # Create a pole vector constraint with the control
     #
