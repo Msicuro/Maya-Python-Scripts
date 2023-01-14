@@ -312,9 +312,15 @@ def buildSupport(ctrl_joints):
     cmds.parent(ik_joints[middle_index], ik_joints[0])
     # Add an IK handle to the first, middle and last control joints (these should be in the same hierarchy)
     new_ik_handle = cmds.ikHandle(sj=ik_joints[0], ee=ik_joints[-1])
+    #Create a control for the ik handle
+    new_ik_ctrl = cmds.circle(c=(0,0,0), nr=(0, 1, 0), sw=360, r= 1, d=3, ut=0, tol=0.01, s=8, ch=1)
+    cmds.delete(cmds.pointConstraint(new_ik_handle, new_ik_ctrl))
+    buffer.createTwo(new_ik_ctrl[0])
+
+    cmds.parent(new_ik_handle[0], new_ik_ctrl[0])
     # Create Group nodes above the control joints
     buffer.createTwo(ik_joints[0])
-    buffer.createTwo(ctrl_joints[1::2])
+
     # Point constrain the remaining group nodes above the two joints (which should be separate) to the appropriate ik control joints
     mid_joints = ctrl_joints[1::2]
     inc = 0
@@ -326,9 +332,11 @@ def buildSupport(ctrl_joints):
     # Create a curve control (or any control shape) and move it to the center control joint and away
     new_pvector = cmds.curve(d=1, p=[(0.5, 0.5, 0.5), (0.5, -0.5, 0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, 0.5), (0.5, 0.5, 0.5), (0.5, 0.5, -0.5), (0.5, -0.5, -0.5), (0.5, -0.5, 0.5), (-0.5, -0.5, 0.5), (-0.5, -0.5, -0.5), (0.5, -0.5, -0.5), (0.5, 0.5, -0.5), (-0.5, 0.5, -0.5), (-0.5, -0.5, -0.5), (-0.5, 0.5, -0.5), (-0.5, 0.5, 0.5)], k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
     cmds.delete(cmds.pointConstraint(ik_joints[1], new_pvector))
-    cmds.setAttr('{}.translateZ'.format(new_pvector), -4)
+
+    cmds.move(8, new_pvector, x=True)
+    buffer.createTwo(new_pvector)
     # Create a pole vector constraint with the control
-    cmds.poleVectorConstraint(new_pvector, new_ik_handle)
+    cmds.poleVectorConstraint(new_pvector, new_ik_handle[0])
 
 
 def bindPlanks():
