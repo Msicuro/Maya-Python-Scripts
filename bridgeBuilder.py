@@ -122,7 +122,7 @@ def createCurve():
 
 def selectAllVerts():
     """
-    Selects and returns all vertices on a mesh or nurbsSurface
+    Lists and returns all vertices on the selected mesh or nurbsSurface
     """
     selection = cmds.ls(selection=True)
     shape_node = cmds.listRelatives(selection, s=True)[0]
@@ -141,7 +141,7 @@ def selectAllVerts():
 
 def centerJoint(name):
     """
-    Will create a joint based on the center of the current selection(s).
+    Creates a joint at the center of the current selection(s).
     CREDIT: Script from Rigging Dojo
     """
     sel = cmds.ls(sl=1, fl=1)
@@ -310,6 +310,8 @@ def buildSupport(ctrl_joints):
     middle_index = int(len(ik_joints) / 2)
     cmds.parent(ik_joints[-1], ik_joints[middle_index])
     cmds.parent(ik_joints[middle_index], ik_joints[0])
+    # Orient the ik joints
+    cmds.joint(ik_joints[0], edit=True, orientJoint="xyz", secondaryAxisOrient="yup", children=True)
     # Add an IK handle to the first, middle and last control joints (these should be in the same hierarchy)
     new_ik_handle = cmds.ikHandle(sj=ik_joints[0], ee=ik_joints[-1])
     #Create a control for the ik handle
@@ -339,10 +341,27 @@ def buildSupport(ctrl_joints):
     cmds.poleVectorConstraint(new_pvector, new_ik_handle[0])
 
 
-def bindPlanks():
+def bindPlanks(boards):
     # Select the vertices on each side of the plank
     # Create a joint in the center on each side
     # Bind the joints to the board
     # Create a Buffer group above the joints
     # Parent constrain the Buffer groups to the corresponding locator on the rope
-    pass
+    left_joints = []
+    right_joints = []
+    for i in boards:
+        cmds.select(i)
+        all_vertices, selection = selectAllVerts()
+
+        cmds.select(all_vertices[1::2])
+        left_joint = centerJoint("left_" + str(i))
+        left_joints.append(left_joint)
+
+        cmds.select(all_vertices[0::2])
+        right_joint = centerJoint("right_" + str(i))
+        right_joints.append(right_joint)
+
+        cmds.select(left_joint, right_joint, i)
+        cmds.SmoothBindSkin()
+
+    return left_joints, right_joints
