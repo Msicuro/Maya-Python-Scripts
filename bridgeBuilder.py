@@ -46,9 +46,11 @@ def selectSpans(verts_in_span, joint_name, bind=True):
             spans.append([])
             for vert in range(verts_in_span):
                 spans[i].append(all_verts[inc])
-                cmds.select(all_verts[inc], add=True)
+                # cmds.select(all_verts[inc], add=True)
                 inc += 1
 
+        for i in range(len(spans)):
+            cmds.select(spans[i])
             mesh_bind_joints.append(centerJoint(name="{}_BIND_{}".format(joint_name, i)))
             cmds.select(clear=True)
 
