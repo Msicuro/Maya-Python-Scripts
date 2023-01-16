@@ -36,8 +36,6 @@ def selectSpans(verts_in_span, joint_name, bind=True):
             mesh_bind_joints.append(centerJoint(name="{}_BIND_{}".format(joint_name, i)))
             cmds.select(clear=True)
 
-
-
     elif cmds.objectType(shape_node, isType="mesh"):
         num_of_spans = int(len(all_verts) / verts_in_span)
 
