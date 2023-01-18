@@ -367,13 +367,18 @@ def bindPlanks(boards):
     return left_joints, right_joints
 
 def createControls(ctrl_joints, name):
-
     inc = 1
+    controls = []
     for i in ctrl_joints:
         new_circle = cmds.circle(n="{}_{}_CTRL".format(name, inc), c=(0, 0, 0), nr=(0, 1, 0), sw=360, r=1, d=3, ut=0, tol=0.01, s=8, ch=1)
-        cmds.delete(cmds.parentConstraint(i, new_circle))
+        cmds.delete(cmds.parentConstraint(i, new_circle[0]))
 
         cmds.select("{}.cv[*]".format(new_circle[0]))
         cmds.rotate(90, 0, 0, r=1, os=1, fo=1)
         cmds.scale(1.2, 1.2, 1.2, r=1, os=1)
+
+        buffer.createTwo(new_circle[0])
+        controls.append(new_circle[0])
         inc += 1
+
+    return controls
