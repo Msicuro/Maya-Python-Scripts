@@ -68,7 +68,7 @@ def selectSpans(verts_in_span, joint_name, bind=True):
     for i in range(len(locators)):
         cmds.parent(mesh_bind_joints[i], locators[i])
 
-    return mesh_bind_joints, locators, spans
+    return mesh_bind_joints, locators, spans, joint_name
 
 
 def addLocators(joints):
