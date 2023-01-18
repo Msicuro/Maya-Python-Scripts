@@ -107,7 +107,7 @@ def createCurve():
     # Increase the size of the control joints and create a transform group above them
     for i in control_joints:
         cmds.setAttr("{}.radius".format(i), 1.8)
-        zero = cmds.group(empty=True, n="{}".format(i.replace("JNT", "ZERO_GRP")))
+        zero = cmds.group(empty=True, n="{}_ZERO_GRP".format(i))
         cmds.delete(cmds.parentConstraint(i, zero)[0])
         cmds.parent(i, zero)
 
