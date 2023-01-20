@@ -361,9 +361,17 @@ def bindPlanks(boards):
         left_joint = centerJoint("left_" + str(i))
         left_joints.append(left_joint)
 
+        left_grp = cmds.group(empty=True, n=left_joint + "_BUFF_GRP")
+        cmds.delete(cmds.parentConstraint(left_joint, left_grp))
+        cmds.parent(left_joint, left_grp)
+
         cmds.select(all_vertices[0::2])
         right_joint = centerJoint("right_" + str(i))
         right_joints.append(right_joint)
+
+        right_grp = cmds.group(empty=True, n=right_joint + "_BUFF_GRP")
+        cmds.delete(cmds.parentConstraint(right_joint, right_grp))
+        cmds.parent(right_joint, right_grp)
 
         cmds.select(left_joint, right_joint, i)
         cmds.SmoothBindSkin()
