@@ -335,10 +335,13 @@ def buildSupport(ctrl_joints):
     new_pvector = cmds.curve(d=1, p=[(0.5, 0.5, 0.5), (0.5, -0.5, 0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, 0.5), (0.5, 0.5, 0.5), (0.5, 0.5, -0.5), (0.5, -0.5, -0.5), (0.5, -0.5, 0.5), (-0.5, -0.5, 0.5), (-0.5, -0.5, -0.5), (0.5, -0.5, -0.5), (0.5, 0.5, -0.5), (-0.5, 0.5, -0.5), (-0.5, -0.5, -0.5), (-0.5, 0.5, -0.5), (-0.5, 0.5, 0.5)], k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
     cmds.delete(cmds.pointConstraint(ik_joints[1], new_pvector))
 
+    pv_position = cmds.getAttr("{}.translateX".format(new_pvector))
     if "left" in str(ik_joints[0]):
-        cmds.move(8, new_pvector, x=True)
+        cmds.move(pv_position+6, new_pvector, x=True)
+    elif "right" in str(ik_joints[0]):
+        cmds.move(pv_position-6, new_pvector, x=True)
     else:
-        cmds.move(-8, new_pvector, x=True)
+        raise Exception("IK Joint must have 'left' or 'right' in the name'")
 
     buffer.createTwo(new_pvector)
     # Create a pole vector constraint with the control
