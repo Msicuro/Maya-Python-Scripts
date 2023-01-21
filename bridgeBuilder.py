@@ -298,7 +298,7 @@ def setupNPOCPath(curve, locators):
 
         # Connect the motionPaths Coordinates attribute into the locator
         cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(locators[i]))
-def buildSupport(ctrl_joints):
+def buildSupport(ctrl_joints, increment):
     # Create bind joints on mesh
         # Run selectSpans
     # Create 5 control joints, 3 for the ik and two to stay in between and manage the curve shape
@@ -306,6 +306,8 @@ def buildSupport(ctrl_joints):
     # Bind the control joints to the curve
         # Run createCurve with the 5 joints selected
     # Parent the last joint to the middle, and the middle to the top joint
+    new_base_name = str(ctrl_joints[0]).split("0")[0]
+
     ik_joints = ctrl_joints[::2]
     middle_index = int(len(ik_joints) / 2)
     cmds.parent(ik_joints[-1], ik_joints[middle_index])
@@ -313,11 +315,13 @@ def buildSupport(ctrl_joints):
     # Orient the ik joints
     cmds.joint(ik_joints[0], edit=True, orientJoint="xyz", secondaryAxisOrient="yup", children=True)
     # Add an IK handle to the first, middle and last control joints (these should be in the same hierarchy)
-    new_ik_handle = cmds.ikHandle(sj=ik_joints[0], ee=ik_joints[-1])
+    new_ik_handle = cmds.ikHandle(n="{}{}_ikHandle".format(new_base_name, increment), sj=ik_joints[0], ee=ik_joints[-1])
     #Create a control for the ik handle
-    new_ik_ctrl = cmds.circle(c=(0,0,0), nr=(0, 1, 0), sw=360, r= 1, d=3, ut=0, tol=0.01, s=8, ch=1)
+    new_ik_ctrl = cmds.circle(n="{}{}_ikCTRL".format(new_base_name, increment), c=(0,0,0), nr=(0, 1, 0), sw=360, r= 1, d=3, ut=0, tol=0.01, s=8, ch=1)
     cmds.delete(cmds.pointConstraint(new_ik_handle, new_ik_ctrl))
     buffer.createTwo(new_ik_ctrl[0])
+    cmds.select("{}.cv[*]".format(new_ik_ctrl[0]))
+    cmds.rotate(90, 0, 0, r=1, os=1, fo=1)
 
     cmds.parent(new_ik_handle[0], new_ik_ctrl[0])
     # Create Group nodes above the control joints
@@ -332,7 +336,7 @@ def buildSupport(ctrl_joints):
         inc += 1
 
     # Create a curve control (or any control shape) and move it to the center control joint and away
-    new_pvector = cmds.curve(d=1, p=[(0.5, 0.5, 0.5), (0.5, -0.5, 0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, 0.5), (0.5, 0.5, 0.5), (0.5, 0.5, -0.5), (0.5, -0.5, -0.5), (0.5, -0.5, 0.5), (-0.5, -0.5, 0.5), (-0.5, -0.5, -0.5), (0.5, -0.5, -0.5), (0.5, 0.5, -0.5), (-0.5, 0.5, -0.5), (-0.5, -0.5, -0.5), (-0.5, 0.5, -0.5), (-0.5, 0.5, 0.5)], k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+    new_pvector = cmds.curve(n="{}{}_pVector".format(new_base_name, increment), d=1, p=[(0.5, 0.5, 0.5), (0.5, -0.5, 0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, 0.5), (0.5, 0.5, 0.5), (0.5, 0.5, -0.5), (0.5, -0.5, -0.5), (0.5, -0.5, 0.5), (-0.5, -0.5, 0.5), (-0.5, -0.5, -0.5), (0.5, -0.5, -0.5), (0.5, 0.5, -0.5), (-0.5, 0.5, -0.5), (-0.5, -0.5, -0.5), (-0.5, 0.5, -0.5), (-0.5, 0.5, 0.5)], k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
     cmds.delete(cmds.pointConstraint(ik_joints[1], new_pvector))
 
     pv_position = cmds.getAttr("{}.translateX".format(new_pvector))
