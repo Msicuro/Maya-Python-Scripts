@@ -298,7 +298,7 @@ def setupNPOCPath(curve, locators):
 
         # Connect the motionPaths Coordinates attribute into the locator
         cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(locators[i]))
-def buildSupport(ctrl_joints, increment):
+def buildSupport(ctrl_joints, increment=0):
     # Create bind joints on mesh
         # Run selectSpans
     # Create 5 control joints, 3 for the ik and two to stay in between and manage the curve shape
@@ -350,6 +350,8 @@ def buildSupport(ctrl_joints, increment):
     buffer.createTwo(new_pvector)
     # Create a pole vector constraint with the control
     cmds.poleVectorConstraint(new_pvector, new_ik_handle[0])
+
+    return new_ik_handle, new_ik_ctrl, new_pvector
 
 
 def bindPlanks(boards):
