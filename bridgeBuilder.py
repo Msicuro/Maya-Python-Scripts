@@ -325,7 +325,7 @@ def buildSupport(ctrl_joints, increment=0):
 
     cmds.parent(new_ik_handle[0], new_ik_ctrl[0])
     # Create Group nodes above the control joints
-    buffer.createTwo(ik_joints[0])
+    ik_joint_group = buffer.createTwo(ik_joints[0])
 
     # Point constrain the remaining group nodes above the two joints (which should be separate) to the appropriate ik control joints
     mid_joints = ctrl_joints[1::2]
@@ -347,7 +347,7 @@ def buildSupport(ctrl_joints, increment=0):
     else:
         raise Exception("IK Joint must have 'left' or 'right' in the name'")
 
-    buffer.createTwo(new_pvector)
+    pvector_group = buffer.createTwo(new_pvector)
     # Create a pole vector constraint with the control
     cmds.poleVectorConstraint(new_pvector, new_ik_handle[0])
 
