@@ -319,7 +319,7 @@ def buildSupport(ctrl_joints, increment=0):
     #Create a control for the ik handle
     new_ik_ctrl = cmds.circle(n="{}{}_ikCTRL".format(new_base_name, increment), c=(0,0,0), nr=(0, 1, 0), sw=360, r= 1, d=3, ut=0, tol=0.01, s=8, ch=1)
     cmds.delete(cmds.pointConstraint(new_ik_handle, new_ik_ctrl))
-    buffer.createTwo(new_ik_ctrl[0])
+    ik_ctrl_group = buffer.createTwo(new_ik_ctrl[0])
     cmds.select("{}.cv[*]".format(new_ik_ctrl[0]))
     cmds.rotate(90, 0, 0, r=1, os=1, fo=1)
 
@@ -345,7 +345,7 @@ def buildSupport(ctrl_joints, increment=0):
     elif "right" in str(ik_joints[0]):
         cmds.move(pv_position-6, new_pvector, x=True)
     else:
-        raise Exception("IK Joint must have 'left' or 'right' in the name'")
+        raise Exception("IK joints must have 'left' or 'right' in the name to determine pole vector position")
 
     pvector_group = buffer.createTwo(new_pvector)
     # Create a pole vector constraint with the control
