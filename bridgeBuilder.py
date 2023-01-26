@@ -356,8 +356,9 @@ def buildSupport(ctrl_joints, increment=0):
         raise Exception("IK joints must have 'left' or 'right' in the name to determine pole vector position")
 
     pvector_group = buffer.createTwo(new_pvector)
-    # Create a pole vector constraint with the control
+    # Create a pole vector constraint with the ik handle and a point constraint with the ik control
     cmds.poleVectorConstraint(new_pvector, new_ik_handle[0])
+    cmds.pointConstraint(new_ik_ctrl, pvector_group, mo=1)
 
     #Group the pole vector and ik control
     ik_group = cmds.group(pvector_group, n="{}{}_IK_GRP".format(new_base_name,increment))
