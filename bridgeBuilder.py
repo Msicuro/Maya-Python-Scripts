@@ -310,8 +310,16 @@ def buildSupport(ctrl_joints, increment=0):
 
     ik_joints = ctrl_joints[::2]
     middle_index = int(len(ik_joints) / 2)
+    # Save the existing parent groups for the IK joints to delete
+    middle_joint_group = cmds.ls(ik_joints[middle_index], long=True)[0].split('|')[1:-1][0]
+    last_joint_group = cmds.ls(ik_joints[-1], long=True)[0].split('|')[1:-1][0]
+
     cmds.parent(ik_joints[-1], ik_joints[middle_index])
     cmds.parent(ik_joints[middle_index], ik_joints[0])
+
+    # Delete the previous joint groups
+    cmds.delete(middle_joint_group)
+    cmds.delete(last_joint_group)
     # Orient the ik joints
     cmds.joint(ik_joints[0], edit=True, orientJoint="xyz", secondaryAxisOrient="yup", children=True)
     # Add an IK handle to the first, middle and last control joints (these should be in the same hierarchy)
@@ -325,7 +333,7 @@ def buildSupport(ctrl_joints, increment=0):
 
     cmds.parent(new_ik_handle[0], new_ik_ctrl[0])
     # Create Group nodes above the control joints
-    ik_joint_group = buffer.createTwo(ik_joints[0])
+    #ik_joint_group = buffer.createTwo(ik_joints[0])
 
     # Point constrain the remaining group nodes above the two joints (which should be separate) to the appropriate ik control joints
     mid_joints = ctrl_joints[1::2]
@@ -350,6 +358,11 @@ def buildSupport(ctrl_joints, increment=0):
     pvector_group = buffer.createTwo(new_pvector)
     # Create a pole vector constraint with the control
     cmds.poleVectorConstraint(new_pvector, new_ik_handle[0])
+
+    #Group the pole vector and ik control
+    ik_group = cmds.group(pvector_group, n="{}{}_IK_GRP".format(new_base_name,increment))
+    cmds.parent(ik_ctrl_group, ik_group)
+    #cmds.parent(ik_joint_group, ik_group)
 
     return new_ik_handle, new_ik_ctrl, new_pvector
 
