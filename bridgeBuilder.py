@@ -82,7 +82,7 @@ def addLocators(joints):
     return locators
 
 
-def createCurve():
+def createCurve(name=""):
     """
     Creates a curve with points along the selected control joints/transforms along with joints to use as controls
     Returns: curve, positions, control_joints
@@ -106,7 +106,7 @@ def createCurve():
         cmds.parent(i, zero)
 
     # Create the curve with CVs at the positions of the control joints
-    curve = cmds.curve(point=positions)
+    curve = cmds.curve(point=positions, n="{}_CRV".format(name))
 
     # Bind the control joints to the curve
     cmds.select(control_joints, curve)
