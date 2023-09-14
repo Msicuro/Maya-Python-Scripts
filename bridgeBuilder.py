@@ -10,14 +10,14 @@ import create_buffer_groups as buffer
 # Run setPositionPercentage
 # Run attachToMotionPath
 
-def selectSpans(verts_in_span, joint_name, bind=True):
+def selectSpans(verts_in_span, joint_name):
     """
     Creates joints at center of each span of a cylinder using the number of vertices that make up each span
     Args:
         verts_in_span: The number of vertices that make up one edge loop/span
         joint_name: The preferred name for the newly created joints
     Returns:
-        mesh_bind_joints, locators, spans
+        mesh_bind_joints, locators, spans, joint_name, mesh
     """
     all_verts, mesh = selectAllVerts()
 
@@ -57,18 +57,12 @@ def selectSpans(verts_in_span, joint_name, bind=True):
     else:
         raise Exception("Wrong lever! (Lever as in node type, please select a nurbsSurface or mesh)")
 
-    # Bind the joints to the mesh unless stated otherwise
-    if bind:
-        cmds.select(clear=True)
-        cmds.select(mesh_bind_joints, mesh)
-        cmds.SmoothBindSkin()
-
     # Create locators to attach above the mesh bind joints
     locators = addLocators(mesh_bind_joints)
     for i in range(len(locators)):
         cmds.parent(mesh_bind_joints[i], locators[i])
 
-    return mesh_bind_joints, locators, spans, joint_name
+    return mesh_bind_joints, locators, spans, joint_name, mesh
 
 
 def addLocators(joints):
@@ -211,7 +205,7 @@ def setPositionPercentage(curve, locators):
 
     return locator_percentage_values
 
-def attachToMotionPath(joint_percentage_values, curve, locators):
+def attachToMotionPath(joint_percentage_values, curve, locators, rotation=False):
     """
     Attaches a motion path node to the locators above the mesh joints using the percentage value from setPositionPercentage()
     Args:
@@ -230,6 +224,9 @@ def attachToMotionPath(joint_percentage_values, curve, locators):
         cmds.setAttr('{}.uValue'.format(motion_paths[i]), joint_percentage_values[locators[i]])
 
         cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(locators[i]))
+
+        if rotation:
+            cmds.connectAttr('{}.rotate'.format(motion_paths[i]), '{}.rotate'.format(locators[i]))
 
     return motion_paths
 
@@ -417,3 +414,8 @@ def createControls(ctrl_joints, name):
         inc += 1
 
     return controls
+
+def bindJoints(mesh, joints):
+    cmds.select(clear=True)
+    cmds.select(joints, mesh)
+    cmds.SmoothBindSkin()
