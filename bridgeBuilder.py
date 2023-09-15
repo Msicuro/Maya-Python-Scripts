@@ -226,7 +226,17 @@ def attachToMotionPath(joint_percentage_values, curve, locators, rotation=False)
         cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(locators[i]))
 
         if rotation:
-            cmds.connectAttr('{}.rotate'.format(motion_paths[i]), '{}.rotate'.format(locators[i]))
+            cmds.setAttr('{}.follow'.format(motion_paths[i]), True)
+            cmds.setAttr('{}.worldUpVectorX'.format(motion_paths[i]), 0)
+            cmds.setAttr('{}.worldUpVectorY'.format(motion_paths[i]), 1)
+            cmds.setAttr('{}.worldUpVectorZ'.format(motion_paths[i]), 0)
+
+            cmds.setAttr('{}.frontAxis'.format(motion_paths[i]), 0)
+            cmds.setAttr('{}.upAxis'.format(motion_paths[i]), 1)
+
+            cmds.connectAttr('{}.rotateX'.format(motion_paths[i]), '{}.rotateX'.format(locators[i]))
+            cmds.connectAttr('{}.rotateY'.format(motion_paths[i]), '{}.rotateY'.format(locators[i]))
+            cmds.connectAttr('{}.rotateZ'.format(motion_paths[i]), '{}.rotateZ'.format(locators[i]))
 
     return motion_paths
 
@@ -406,7 +416,7 @@ def createControls(ctrl_joints, name):
         cmds.delete(cmds.parentConstraint(i, new_circle[0]))
 
         cmds.select("{}.cv[*]".format(new_circle[0]))
-        cmds.rotate(90, 0, 0, r=1, os=1, fo=1)
+        cmds.rotate(0, 0, 90, r=1, os=1, fo=1)
         cmds.scale(1.2, 1.2, 1.2, r=1, os=1)
 
         buffer.createTwo(new_circle[0])
