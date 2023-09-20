@@ -76,6 +76,8 @@ def addLocators(joints):
     locators = []
     for i in joints:
         loc = cmds.spaceLocator(name="{}".format(i).replace("JNT", "LOC"))
+        print("i: {}".format(i))
+        print("LOC: {}".format(loc))
         cmds.delete(cmds.pointConstraint(i, loc))
         locators.append(loc[0])
 
@@ -109,8 +111,8 @@ def createCurve(name=""):
     curve = cmds.curve(point=positions, n="{}_CRV".format(name))
 
     # Bind the control joints to the curve
-    cmds.select(control_joints, curve)
-    cmds.SmoothBindSkin()
+    #cmds.select(control_joints, curve)
+    #cmds.SmoothBindSkin()
 
     return curve, positions, control_joints
 
@@ -205,13 +207,14 @@ def setPositionPercentage(curve, locators):
 
     return locator_percentage_values
 
-def attachToMotionPath(joint_percentage_values, curve, locators, rotation=False):
+def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints, rope_type="main", rotation=False):
     """
     Attaches a motion path node to the locators above the mesh joints using the percentage value from setPositionPercentage()
     Args:
         joint_percentage_values: The percentage values of transforms along the curve taken from setPositionPercentage()
         curve: The base curve
         locators: The locators parented above the joints skinned to the mesh
+        ctrl_joints: The control joints to re-orient to match the bind joints/locators
     """
     curve_shape = cmds.listRelatives(curve, shapes=True)[0]
     motion_paths = []
@@ -237,6 +240,61 @@ def attachToMotionPath(joint_percentage_values, curve, locators, rotation=False)
             cmds.connectAttr('{}.rotateX'.format(motion_paths[i]), '{}.rotateX'.format(locators[i]))
             cmds.connectAttr('{}.rotateY'.format(motion_paths[i]), '{}.rotateY'.format(locators[i]))
             cmds.connectAttr('{}.rotateZ'.format(motion_paths[i]), '{}.rotateZ'.format(locators[i]))
+
+            #Iterate through the control joints and match the transforms of the appropriate locator only if it's a main
+            if rope_type == "main":
+                for c in range(len(ctrl_joints)):
+                    print(ctrl_joints)
+                    ctrl_zero_group = cmds.listRelatives(ctrl_joints[c], parent=True)[0]
+
+                    #Get the value right before "_CTRL" in the control joint and compare to the locator index
+                    ctrl_index = ctrl_joints[c].find("_CTRL")-1
+                    ctrl_index = int(ctrl_joints[c][ctrl_index])
+                    print("CTRL INDEX: {}".format(ctrl_index))
+                    print("LOCATOR INDEX: {}".format(i))
+
+                    if ctrl_index == i:
+                        cmds.delete(cmds.parentConstraint(locators[i], ctrl_zero_group))
+                        print("SUCCESS")
+                        break
+                    else:
+                        print("FAIL")
+
+            elif rope_type == "support":
+                #Create a new locator to use as the world up object for the motion path only on the top joint
+                if i == 0:
+                    #Get the first control joint to snap the new locator to
+                    first_joint = []
+                    first_joint.append(ctrl_joints[0])
+
+                    # Create the new locator to use as the Up Object for the motion paths
+                    up_object = addLocators(first_joint)
+                    print("UP OBJECT: {}".format(up_object))
+
+                    # Rename the new locator
+
+                    #Move the new locator inward by 1 unit
+                    up_object_pos = cmds.getAttr("{}.translateX".format(up_object[0]))
+
+                    if "left" in str(up_object[0]):
+                        cmds.move(up_object_pos - 2, up_object[0], x=True)
+                    elif "right" in str(up_object[0]):
+                        cmds.move(up_object_pos + 2, up_object[0], x=True)
+                    else:
+                        raise Exception(
+                            "CTRL joint must have 'left' or 'right' in the name to determine up object position")
+
+                    #Connect worldUp object on the motion path to the up_object locator
+                    cmds.setAttr('{}.worldUpType'.format(motion_paths[i]), 1)
+                    cmds.connectAttr("{}.worldMatrix[0]".format(up_object[0]), "{}.worldUpMatrix".format(motion_paths[i]))
+                    #cmds.pointConstraint(first_joint[0], up_object[i])
+
+                # Connect worldUp object on the motion path to the up_object locator
+                else:
+                    # Connect worldUp object on the motion path to the up_object locator
+                    cmds.setAttr('{}.worldUpType'.format(motion_paths[i]), 1)
+                    cmds.connectAttr("{}.worldMatrix[0]".format(up_object[0]), "{}.worldUpMatrix".format(motion_paths[i]))
+                    #cmds.pointConstraint(first_joint[0], up_object[i])
 
     return motion_paths
 
@@ -429,3 +487,51 @@ def bindJoints(mesh, joints):
     cmds.select(clear=True)
     cmds.select(joints, mesh)
     cmds.SmoothBindSkin()
+
+
+def addStretchyIK(ctrl_joints):
+    pass
+    # Get the upperarm length
+    upperarm_length = cmds.getAttr("{}.translateX".format(ctrl_joints[2]))
+    # Get the lowerarm length
+    lowerarm_length = cmds.getAttr("{}.translateX".format(ctrl_joints[4]))
+    # Add the shoulder and elbow joint length for the arm length
+    arm_length = upperarm_length+lowerarm_length
+    # Create locators at the shoulder and wrist
+    arm_joints = [ctrl_joints[2], ctrl_joints[4]]
+    stretch_locators = addLocators(arm_joints)
+    # Create distance node for arm distance (distance between the shoulder and wrist)
+    arm_distance = cmds.shadingNode("distanceBetween", asUtility=True)
+    # Create a multiplyDivide node (set to divide) and name it distance_divider
+    arm_divider = cmds.shadingNode("multiplyDivide", asUtility=True)
+        # Set input2 of the divider to the arm length
+    cmds.setAttr("{}.input2".format(arm_divider), upperarm_length+lowerarm_length)
+        # Plug the distance from the arm distance dimension node into the input1 of the divider
+    cmds.connectAttr("{}.distance".format(arm_distance), "{}.input1X".format(arm_divider))
+    # Create two multDoubleLiner nodes, one for the upperarm and one for the lowerarm
+    upperarm_multiplier = cmds.shadingNode("multDoubleLinear", asUtility=True)
+    lowerarm_multiplier = cmds.shadingNode("multDoubleLinear", asUtility=True)
+        # Plug the output from the divider into input1 of both multDoubleLinear nodes
+    cmds.connectAttr("{}.outputX".format(arm_divider), "{}.input1".format(upperarm_multiplier))
+    cmds.connectAttr("{}.outputX".format(arm_divider), "{}.input1".format(lowerarm_multiplier))
+        # Set input2 of the upparm multipler to the length of the upperarm (elbow X value)
+    cmds.setAttr("{}.input2".format(upperarm_multiplier), upperarm_length)
+        # Set input2 of the lowerarm multipler to the length of the lowerarm (wrist X value)
+    cmds.setAttr("{}.input2".format(lowerarm_multiplier), lowerarm_length)
+    # Create two condition nodes, one for the upperarm and one for the lowerarm
+    upperarm_condition = cmds.shadingNode("condition", asUtility=True)
+    lowerarm_condition = cmds.shadingNode("condition", asUtility=True)
+        # Plug the output from the divider into FirstTerm of both condition nodes
+    cmds.connectAttr("{}.outputX".format(arm_divider), "{}.firstTerm".format(upperarm_condition))
+    cmds.connectAttr("{}.outputX".format(arm_divider), "{}.firstTerm".format(lowerarm_condition))
+        # Set the SecondTerm of the both condition nodes to the arm length
+    cmds.setAttr("{}.secondTerm".format(upperarm_condition), upperarm_length+lowerarm_length)
+    cmds.setAttr("{}.secondTerm".format(lowerarm_condition), upperarm_length+lowerarm_length)
+        # Set the ColorIfFals of the upperarm condition node to the length of the upperarm (elbow X)
+    cmds.setAttr("{}.colorIfFalseR".format(upperarm_condition), upperarm_length)
+        # Set the ColorIfFals of the lowerarm condition node to the length of the lowerarm (wrist X)
+    cmds.setAttr("{}.colorIfFalseR".format(lowerarm_condition), lowerarm_length)
+    # Plug the OutColorR of the upperarm condition node into the translateX of the elbow joint
+    cmds.connectAttr("{}.outColorR".format(upperarm_condition), "{}.translateX".format(ctrl_joints[2]))
+    # Plug the OutColorR of the lowerarm condition node into the translateX of the wrist joint
+    cmds.connectAttr("{}.outColorR".format(lowerarm_condition), "{}.translateX".format(ctrl_joints[4]))
