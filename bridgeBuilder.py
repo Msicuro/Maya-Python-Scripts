@@ -65,7 +65,7 @@ def selectSpans(verts_in_span, joint_name):
     return mesh_bind_joints, locators, spans, joint_name, mesh
 
 
-def addLocators(joints):
+def addLocators(joints, name=""):
     """
     Creates locators at the selected positions based on a list of joints (or any selected objects with transforms)
     Args:
@@ -75,7 +75,10 @@ def addLocators(joints):
     """
     locators = []
     for i in joints:
-        loc = cmds.spaceLocator(name="{}".format(i).replace("JNT", "LOC"))
+        if name == "":
+            loc = cmds.spaceLocator(name="{}".format(i).replace("JNT", "LOC"))
+        else:
+            loc = cmds.spaceLocator(name="{}_LOC".format(name))
         print("i: {}".format(i))
         print("LOC: {}".format(loc))
         cmds.delete(cmds.pointConstraint(i, loc))
@@ -287,6 +290,9 @@ def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints, ro
                     #Connect worldUp object on the motion path to the up_object locator
                     cmds.setAttr('{}.worldUpType'.format(motion_paths[i]), 1)
                     cmds.connectAttr("{}.worldMatrix[0]".format(up_object[0]), "{}.worldUpMatrix".format(motion_paths[i]))
+
+                    # Parent the up object locator to the ik joint parent group
+                    cmds.parent(up_object[i], first_joint[0])
                     #cmds.pointConstraint(first_joint[0], up_object[i])
 
                 # Connect worldUp object on the motion path to the up_object locator
@@ -295,6 +301,8 @@ def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints, ro
                     cmds.setAttr('{}.worldUpType'.format(motion_paths[i]), 1)
                     cmds.connectAttr("{}.worldMatrix[0]".format(up_object[0]), "{}.worldUpMatrix".format(motion_paths[i]))
                     #cmds.pointConstraint(first_joint[0], up_object[i])
+            else:
+                raise Exception("Please select rope type 'main' or 'support'")
 
     return motion_paths
 
@@ -483,14 +491,17 @@ def createControls(ctrl_joints, name):
 
     return controls
 
-def bindJoints(mesh, joints):
+def bindJoints(mesh, joints, rope_type=""):
     cmds.select(clear=True)
     cmds.select(joints, mesh)
-    cmds.SmoothBindSkin()
+    skin_cluster = cmds.skinCluster()[0]
+    if rope_type == "support":
+        print("CV: {}".format("{}.cv[-1]".format(mesh)))
+        print("CTRL JOINT: {}".format(joints[-1]))
+        cmds.skinPercent(skin_cluster, "{}.cv[{}]".format(mesh, len(joints)), transformValue = [joints[-1], 1])
 
 
-def addStretchyIK(ctrl_joints):
-    pass
+def addStretchyIK(ctrl_joints, locators):
     # Get the upperarm length
     upperarm_length = cmds.getAttr("{}.translateX".format(ctrl_joints[2]))
     # Get the lowerarm length
@@ -498,14 +509,18 @@ def addStretchyIK(ctrl_joints):
     # Add the shoulder and elbow joint length for the arm length
     arm_length = upperarm_length+lowerarm_length
     # Create locators at the shoulder and wrist
-    arm_joints = [ctrl_joints[2], ctrl_joints[4]]
-    stretch_locators = addLocators(arm_joints)
+    arm_joints = [ctrl_joints[0], ctrl_joints[-1]]
+    stretch_locators = addLocators(arm_joints, name=arm_joints[0].replace("CTRL", "STRCH").replace("JNT_", ""))
     # Create distance node for arm distance (distance between the shoulder and wrist)
     arm_distance = cmds.shadingNode("distanceBetween", asUtility=True)
+    # Connect top and bottom locators to Distance node
+    cmds.connectAttr("{}.worldPosition[0]".format(cmds.listRelatives(stretch_locators[0], s=True)[0]), "{}.point1".format(arm_distance))
+    cmds.connectAttr("{}.worldPosition[0]".format(cmds.listRelatives(stretch_locators[1], s=True)[0]), "{}.point2".format(arm_distance))
     # Create a multiplyDivide node (set to divide) and name it distance_divider
-    arm_divider = cmds.shadingNode("multiplyDivide", asUtility=True)
+    arm_divider = cmds.shadingNode("multiplyDivide", asUtility=True, n="distance_divider")
+    cmds.setAttr("{}.operation".format(arm_divider), 2)
         # Set input2 of the divider to the arm length
-    cmds.setAttr("{}.input2".format(arm_divider), upperarm_length+lowerarm_length)
+    cmds.setAttr("{}.input2X".format(arm_divider), upperarm_length+lowerarm_length)
         # Plug the distance from the arm distance dimension node into the input1 of the divider
     cmds.connectAttr("{}.distance".format(arm_distance), "{}.input1X".format(arm_divider))
     # Create two multDoubleLiner nodes, one for the upperarm and one for the lowerarm
@@ -521,17 +536,39 @@ def addStretchyIK(ctrl_joints):
     # Create two condition nodes, one for the upperarm and one for the lowerarm
     upperarm_condition = cmds.shadingNode("condition", asUtility=True)
     lowerarm_condition = cmds.shadingNode("condition", asUtility=True)
-        # Plug the output from the divider into FirstTerm of both condition nodes
-    cmds.connectAttr("{}.outputX".format(arm_divider), "{}.firstTerm".format(upperarm_condition))
-    cmds.connectAttr("{}.outputX".format(arm_divider), "{}.firstTerm".format(lowerarm_condition))
+    cmds.setAttr("{}.operation".format(upperarm_condition), 2)
+    cmds.setAttr("{}.operation".format(lowerarm_condition), 2)
+        # Plug the distance from the arm distance into FirstTerm of both condition nodes
+    cmds.connectAttr("{}.distance".format(arm_distance), "{}.firstTerm".format(upperarm_condition))
+    cmds.connectAttr("{}.distance".format(arm_distance), "{}.firstTerm".format(lowerarm_condition))
+        # Plug the output from the arm multipliers into ColorIfTrue of both condition nodes
+    cmds.connectAttr("{}.output".format(upperarm_multiplier), "{}.colorIfTrueR".format(upperarm_condition))
+    cmds.connectAttr("{}.output".format(lowerarm_multiplier), "{}.colorIfTrueR".format(lowerarm_condition))
         # Set the SecondTerm of the both condition nodes to the arm length
     cmds.setAttr("{}.secondTerm".format(upperarm_condition), upperarm_length+lowerarm_length)
     cmds.setAttr("{}.secondTerm".format(lowerarm_condition), upperarm_length+lowerarm_length)
-        # Set the ColorIfFals of the upperarm condition node to the length of the upperarm (elbow X)
+        # Set the ColorIfFalse of the upperarm condition node to the length of the upperarm (elbow X)
     cmds.setAttr("{}.colorIfFalseR".format(upperarm_condition), upperarm_length)
-        # Set the ColorIfFals of the lowerarm condition node to the length of the lowerarm (wrist X)
+        # Set the ColorIfFalse of the lowerarm condition node to the length of the lowerarm (wrist X)
     cmds.setAttr("{}.colorIfFalseR".format(lowerarm_condition), lowerarm_length)
     # Plug the OutColorR of the upperarm condition node into the translateX of the elbow joint
     cmds.connectAttr("{}.outColorR".format(upperarm_condition), "{}.translateX".format(ctrl_joints[2]))
     # Plug the OutColorR of the lowerarm condition node into the translateX of the wrist joint
     cmds.connectAttr("{}.outColorR".format(lowerarm_condition), "{}.translateX".format(ctrl_joints[4]))
+
+    # Get the ik handle and the ik control before re-parenting
+    ik_handle = cmds.listConnections(ctrl_joints[0], type="ikHandle")
+    ik_ctrl = cmds.listRelatives(ik_handle, parent=True)
+    # Parent the IK handle under the 2nd locator
+    cmds.parent(ik_handle, stretch_locators[-1])
+    # Parent the 2nd locator under the IK control
+    cmds.parent(stretch_locators[-1], ik_ctrl)
+
+    # Get the parent group of the ik control joints
+    ctrl_joint_parent_grp = cmds.listRelatives(ctrl_joints[0], parent=True)
+    # Parent the 1st locator under the ik joint parent group
+    cmds.parent(stretch_locators[0], ctrl_joint_parent_grp)
+
+
+def buildRope():
+    pass
