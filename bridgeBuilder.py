@@ -33,7 +33,10 @@ def selectSpans(verts_in_span, joint_name):
         for i in range(span_range):
             vert_span = cmds.ls('{}.cv[{}][*]'.format(shape_node, i), fl=True)
             cmds.select(vert_span)
-            mesh_bind_joints.append(centerJoint(name="{}_BIND_{}".format(joint_name, i)))
+            if i <= 9:
+                mesh_bind_joints.append(centerJoint(name="{}_BIND_0{}".format(joint_name, i)))
+            else:
+                mesh_bind_joints.append(centerJoint(name="{}_BIND_{}".format(joint_name, i)))
             cmds.select(clear=True)
 
     elif cmds.objectType(shape_node, isType="mesh"):
@@ -51,7 +54,10 @@ def selectSpans(verts_in_span, joint_name):
 
         for i in range(len(spans)):
             cmds.select(spans[i])
-            mesh_bind_joints.append(centerJoint(name="{}_BIND_{}".format(joint_name, i)))
+            if i <= 9:
+                mesh_bind_joints.append(centerJoint(name="{}_BIND_0{}".format(joint_name, i)))
+            else:
+                mesh_bind_joints.append(centerJoint(name="{}_BIND_{}".format(joint_name, i)))
             cmds.select(clear=True)
 
     else:
@@ -251,12 +257,15 @@ def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints, ro
                     ctrl_zero_group = cmds.listRelatives(ctrl_joints[c], parent=True)[0]
 
                     #Get the value right before "_CTRL" in the control joint and compare to the locator index
-                    ctrl_index = ctrl_joints[c].find("_CTRL")-1
-                    ctrl_index = int(ctrl_joints[c][ctrl_index])
+                    ctrl_index = ctrl_joints[c].find("_CTRL")
+                    ctrl_index = ctrl_joints[c][ctrl_index-2:ctrl_index]
                     print("CTRL INDEX: {}".format(ctrl_index))
+
+                    locator_index = locators[i].find("_LOC")
+                    locator_index = locators[i][locator_index - 2:locator_index]
                     print("LOCATOR INDEX: {}".format(i))
 
-                    if ctrl_index == i:
+                    if ctrl_index == locator_index:
                         cmds.delete(cmds.parentConstraint(locators[i], ctrl_zero_group))
                         print("SUCCESS")
                         break
@@ -501,7 +510,7 @@ def bindJoints(mesh, joints, rope_type=""):
         cmds.skinPercent(skin_cluster, "{}.cv[{}]".format(mesh, len(joints)), transformValue = [joints[-1], 1])
 
 
-def addStretchyIK(ctrl_joints, locators):
+def addStretchyIK(ctrl_joints):
     # Get the upperarm length
     upperarm_length = cmds.getAttr("{}.translateX".format(ctrl_joints[2]))
     # Get the lowerarm length
@@ -571,4 +580,48 @@ def addStretchyIK(ctrl_joints, locators):
 
 
 def buildRope():
-    pass
+    side = ["left", "right"]
+    type = ["main", "support"]
+    name = "ropey_rope"
+
+    if type == "main":
+        # Select mesh
+        bind_joints, locators, spans, name, mesh = bridgeBuilder.selectSpans(20, "{}_{}_{}".format(side[0], type[0], name))
+
+        # Select transforms to be used as control joints
+        curve, positions, ctrl_joints = bridgeBuilder.createCurve("{}_{}_{}".format(side[0], type[0], name))
+
+        # Run setPositionPercentage using the curve and joints variables from the first two functions
+        joint_percentage_values = bridgeBuilder.setPositionPercentage(curve, locators)
+
+        # Run attachToMotionPath using the joint percentage values, curve and joints variables from the previous functions
+        motion_paths = bridgeBuilder.attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints,
+                                                        rotation=True)
+
+        bindJoints(mesh, bind_joints)
+        bindJoints(curve, ctrl_joints)
+
+    elif type == "support":
+        left_supports = cmds.ls(sl=1)
+        support_number = 0
+        for i in left_supports:
+            cmds.select(i)
+            bind_joints, locators, spans, name, mesh = bridgeBuilder.selectSpans(20, "{}_{}_{}".format(side[0], type[1],
+                                                                                                       name,
+                                                                                                       support_number))
+            locators_group = cmds.group(locators, n="{}_locators_GRP".format(name))
+
+            cmds.select(locators[0::2])
+            curve, positions, ctrl_joints = bridgeBuilder.createCurve("{}_{}_{}".format(side[0], type[1], name))
+            new_ik_handle, new_ik_ctrl, new_pvector = bridgeBuilder.buildSupport(ctrl_joints)
+
+            joint_percentage_values = bridgeBuilder.setPositionPercentage(curve, locators)
+            motion_paths = bridgeBuilder.attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints,
+                                                            rotation=True, rope_type="support")
+
+            bridgeBuilder.addStretchyIK(ctrl_joints)
+
+            support_number += 1
+
+        bindJoints(mesh, bind_joints)
+        bindJoints(curve, ctrl_joints, rope_type="support")
