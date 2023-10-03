@@ -216,7 +216,7 @@ def setPositionPercentage(curve, locators):
 
     return locator_percentage_values
 
-def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints, rope_type="main", rotation=False):
+def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints=None, rope_type="main", rotation=False):
     """
     Attaches a motion path node to the locators above the mesh joints using the percentage value from setPositionPercentage()
     Args:
@@ -579,17 +579,18 @@ def addStretchyIK(ctrl_joints):
     cmds.parent(stretch_locators[0], ctrl_joint_parent_grp)
 
 
-def buildRope():
+def buildRope(side):
     side = ["left", "right"]
     type = ["main", "support"]
-    name = "ropey_rope"
+    rope_name = "ropey_rope"
 
     if type == "main":
         # Select mesh
-        bind_joints, locators, spans, name, mesh = bridgeBuilder.selectSpans(20, "{}_{}_{}".format(side[0], type[0], name))
+        bind_joints, locators, spans, name, mesh = bridgeBuilder.selectSpans(20, "{}_{}_{}".format(side[0], type[0],
+                                                                                                   rope_name))
 
         # Select transforms to be used as control joints
-        curve, positions, ctrl_joints = bridgeBuilder.createCurve("{}_{}_{}".format(side[0], type[0], name))
+        curve, positions, ctrl_joints = bridgeBuilder.createCurve("{}_{}_{}".format(side[0], type[0], rope_name))
 
         # Run setPositionPercentage using the curve and joints variables from the first two functions
         joint_percentage_values = bridgeBuilder.setPositionPercentage(curve, locators)
@@ -598,21 +599,24 @@ def buildRope():
         motion_paths = bridgeBuilder.attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints,
                                                         rotation=True)
 
-        bindJoints(mesh, bind_joints)
-        bindJoints(curve, ctrl_joints)
+        bridgeBuilder.bindJoints(mesh, bind_joints)
+        bridgeBuilder.bindJoints(curve, ctrl_joints)
 
     elif type == "support":
         left_supports = cmds.ls(sl=1)
         support_number = 0
         for i in left_supports:
             cmds.select(i)
-            bind_joints, locators, spans, name, mesh = bridgeBuilder.selectSpans(20, "{}_{}_{}".format(side[0], type[1],
-                                                                                                       name,
-                                                                                                       support_number))
-            locators_group = cmds.group(locators, n="{}_locators_GRP".format(name))
+            bind_joints, locators, spans, name, mesh = bridgeBuilder.selectSpans(20,
+                                                                                 "{}_{}_{}_{}".format(side[0], type[1],
+                                                                                                      support_number,
+                                                                                                      rope_name))
+            locators_group = cmds.group(locators,
+                                        n="{}_{}_{}_{}_LOC_GRP".format(side[0], type[1], support_number, rope_name))
 
             cmds.select(locators[0::2])
-            curve, positions, ctrl_joints = bridgeBuilder.createCurve("{}_{}_{}".format(side[0], type[1], name))
+            curve, positions, ctrl_joints = bridgeBuilder.createCurve(
+                "{}_{}_{}_{}".format(side[0], type[1], support_number, rope_name))
             new_ik_handle, new_ik_ctrl, new_pvector = bridgeBuilder.buildSupport(ctrl_joints)
 
             joint_percentage_values = bridgeBuilder.setPositionPercentage(curve, locators)
@@ -621,7 +625,13 @@ def buildRope():
 
             bridgeBuilder.addStretchyIK(ctrl_joints)
 
-            support_number += 1
+            support_ctrl_jnt_GRPs = [i for i in cmds.listRelatives(ctrl_joints[0::], p=1) if
+                                     cmds.objectType(i) == "transform"]
+            support_ik_GRP = cmds.listRelatives(new_pvector, ap=1, f=1)[0].split("|")[1]
+            cmds.group(mesh, locators_group, support_ctrl_jnt_GRPs, curve, support_ik_GRP,
+                       name="{}_{}_{}_{}_GRP".format(side[0], type[1], support_number, rope_name))
 
-        bindJoints(mesh, bind_joints)
-        bindJoints(curve, ctrl_joints, rope_type="support")
+            bridgeBuilder.bindJoints(mesh, bind_joints)
+            bridgeBuilder.bindJoints(curve, ctrl_joints, rope_type=type[1])
+
+            support_number += 1
