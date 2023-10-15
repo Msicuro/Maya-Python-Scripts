@@ -10,7 +10,7 @@ import create_buffer_groups as buffer
 # Run setPositionPercentage
 # Run attachToMotionPath
 
-def selectSpans(verts_in_span, joint_name):
+def selectSpans(joint_name, verts_in_span=None):
     """
     Creates joints at center of each span of a cylinder using the number of vertices that make up each span
     Args:
@@ -40,6 +40,8 @@ def selectSpans(verts_in_span, joint_name):
             cmds.select(clear=True)
 
     elif cmds.objectType(shape_node, isType="mesh"):
+        if not verts_in_span:
+            verts_in_span = cmds.getAttr("{}.subdivisionsAxis".format(mesh[0]))
         num_of_spans = int(len(all_verts) / verts_in_span)
 
         # Select vertices in bulk based on the number of vertices per span and create a joint at the center point before
