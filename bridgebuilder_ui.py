@@ -78,16 +78,17 @@ class RopeUI(QtWidgets.QDialog):
         # Attach to Motion Path section
         motion_path_widget = QtWidgets.QWidget()
         motion_path_layout = QtWidgets.QGridLayout(motion_path_widget)
+        motion_path_widget.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         main_layout.addWidget(motion_path_widget)
 
         motion_path_checkbox = QtWidgets.QCheckBox()
         motion_path_checkbox.setText("Attach Locators to Motion Path")
         rotations_checkbox = QtWidgets.QCheckBox()
         rotations_checkbox.setText("Include Motion Path Rotations")
-        rotations_checkbox.setStyleSheet("font-size: 12px")
 
         motion_path_layout.addWidget(motion_path_checkbox, 0, 0)
-        motion_path_layout.addWidget(rotations_checkbox, 1, 0, 1, 4, alignment=QtCore.Qt.AlignCenter)
+        motion_path_layout.addWidget(rotations_checkbox, 1, 0, 1, 2, alignment=QtCore.Qt.AlignCenter)
+
 
         # Bind section
         bind_widget = QtWidgets.QWidget()
@@ -109,13 +110,13 @@ class RopeUI(QtWidgets.QDialog):
         # Set font size for function widgets
         main_font_size = 18
         select_spans_widget.setStyleSheet("font-size: {}px".format(main_font_size))
-        curve_widget.setStyleSheet("font-size: {}px; background: red".format(main_font_size))
-        position_percent_widget.setStyleSheet("font-size: {}px; background: blue".format(main_font_size))
+        curve_widget.setStyleSheet("font-size: {}px".format(main_font_size))
+        position_percent_widget.setStyleSheet("font-size: {}px".format(main_font_size))
         motion_path_checkbox.setStyleSheet("font-size: {}px".format(main_font_size))
+        rotations_checkbox.setStyleSheet("font-size: 12px")
         bind_widget.setStyleSheet("font-size: {}px".format(main_font_size))
         run_button.setStyleSheet("font-size: {}px".format(main_font_size))
 
-        curve_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
 
 
