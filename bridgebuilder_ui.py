@@ -1,7 +1,18 @@
 from PySide2 import QtWidgets, QtCore, QtGui
+from functools import partial
+import bridgeBuilder
 
 
 class RopeUI(QtWidgets.QDialog):
+
+    rope_functions = {
+        "Select Spans": bridgeBuilder.selectSpans,
+        "Create Curve": bridgeBuilder.createCurve,
+        "Set Position Percentage": bridgeBuilder.setPositionPercentage,
+        "Attach To Motion Path": bridgeBuilder.attachToMotionPath,
+        "Bind": bridgeBuilder.bindJoints
+    }
+
     def __init__(self):
         super(RopeUI, self).__init__()
 
@@ -23,19 +34,19 @@ class RopeUI(QtWidgets.QDialog):
 
         # Create the elements in the name section and add them to the section
         name_label = QtWidgets.QLabel("Name")
-        name_combo = QtWidgets.QComboBox()
-        name_combo.addItem("left")
-        name_combo.addItem("right")
+        self.name_combo = QtWidgets.QComboBox()
+        self.name_combo.addItem("left")
+        self.name_combo.addItem("right")
 
-        name_line = QtWidgets.QLineEdit()
-        type_combo = QtWidgets.QComboBox()
-        type_combo.addItem("Support")
-        type_combo.addItem("Main Rope")
+        self.name_line = QtWidgets.QLineEdit()
+        self.type_combo = QtWidgets.QComboBox()
+        self.type_combo.addItem("Main Rope")
+        self.type_combo.addItem("Support")
 
         name_layout.addWidget(name_label, 0, 0)
-        name_layout.addWidget(name_combo, 0, 1)
-        name_layout.addWidget(name_line, 0, 2)
-        name_layout.addWidget(type_combo, 0, 3)
+        name_layout.addWidget(self.name_combo, 0, 1)
+        name_layout.addWidget(self.name_line, 0, 2)
+        name_layout.addWidget(self.type_combo, 0, 3)
 
         # selectSpans Section
         select_spans_widget = QtWidgets.QWidget()
@@ -117,6 +128,27 @@ class RopeUI(QtWidgets.QDialog):
         bind_widget.setStyleSheet("font-size: {}px".format(main_font_size))
         run_button.setStyleSheet("font-size: {}px".format(main_font_size))
 
+        # Test button functionality
+        # rope_stats = run_button.clicked.connect(partial(bridgeBuilder.selectSpans("{}_{}_{}".format(
+        #     self.name_combo.currentText(),
+        #     self.name_line.text(),
+        #     self.type_combo.currentText()))))
+
+        # Test selectSpans functionality
+        run_button.clicked.connect(self.runSelectSpans)
+
+    def runSelectSpans(self):
+        self.bind_joints, \
+        self.locators, \
+        self.spans, \
+        self.name, \
+        self.mesh, \
+        self.constructor = bridgeBuilder.selectSpans("{}_{}_{}".format(
+            self.name_combo.currentText(),
+            self.name_line.text(),
+            self.type_combo.currentText()
+        ))
+        return self.bind_joints, self.locators, self.spans, self.name, self.mesh, self.constructor
 
 
 
