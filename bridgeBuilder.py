@@ -19,7 +19,7 @@ def selectSpans(joint_name, verts_in_span=None):
     Returns:
         mesh_bind_joints, locators, spans, joint_name, mesh
     """
-    all_verts, mesh = selectAllVerts()
+    all_verts, mesh, constructor = selectAllVerts()
 
     shape_node = cmds.listRelatives(mesh, s=True)[0]
     spans = []
@@ -41,7 +41,7 @@ def selectSpans(joint_name, verts_in_span=None):
 
     elif cmds.objectType(shape_node, isType="mesh"):
         if not verts_in_span:
-            verts_in_span = cmds.getAttr("{}.subdivisionsAxis".format(mesh[0]))
+            verts_in_span = cmds.getAttr("{}.subdivisionsAxis".format(constructor))
         num_of_spans = int(len(all_verts) / verts_in_span)
 
         # Select vertices in bulk based on the number of vertices per span and create a joint at the center point before
@@ -70,7 +70,7 @@ def selectSpans(joint_name, verts_in_span=None):
     for i in range(len(locators)):
         cmds.parent(mesh_bind_joints[i], locators[i])
 
-    return mesh_bind_joints, locators, spans, joint_name, mesh
+    return mesh_bind_joints, locators, spans, joint_name, mesh, constructor
 
 
 def addLocators(joints, name=""):
@@ -133,6 +133,7 @@ def selectAllVerts():
     """
     selection = cmds.ls(selection=True)
     shape_node = cmds.listRelatives(selection, s=True)[0]
+    constructor_node = cmds.listHistory(selection)[1]
 
     if cmds.objectType(shape_node, isType="nurbsSurface"):
         print "Selecting nurbs CVs"
@@ -143,7 +144,7 @@ def selectAllVerts():
     else:
         raise Exception("Wrong lever! (Lever as in node type, please select a nurbsSurface or mesh)")
 
-    return all_vertices, selection
+    return all_vertices, selection, constructor_node
 
 
 def centerJoint(name):
