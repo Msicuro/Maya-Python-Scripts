@@ -254,7 +254,7 @@ def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints=Non
             cmds.connectAttr('{}.rotateZ'.format(motion_paths[i]), '{}.rotateZ'.format(locators[i]))
 
             #Iterate through the control joints and match the transforms of the appropriate locator only if it's a main
-            if rope_type == "main":
+            if "main" in rope_type:
                 for c in range(len(ctrl_joints)):
                     print(ctrl_joints)
                     ctrl_zero_group = cmds.listRelatives(ctrl_joints[c], parent=True)[0]
@@ -275,7 +275,7 @@ def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints=Non
                     else:
                         print("FAIL")
 
-            elif rope_type == "support":
+            elif "support" in rope_type:
                 #Create a new locator to use as the world up object for the motion path only on the top joint
                 if i == 0:
                     #Get the first control joint to snap the new locator to
