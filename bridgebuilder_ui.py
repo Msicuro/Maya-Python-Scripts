@@ -127,7 +127,7 @@ class RopeUI(QtWidgets.QDialog):
         #     self.type_combo.currentText()))))
 
         # Test selectSpans functionality
-        run_button.clicked.connect(self.runButtonFunctions())
+        run_button.clicked.connect(self.runButtonFunctions)
 
     def runSelectSpans(self):
         self.bind_joints,\
@@ -143,27 +143,32 @@ class RopeUI(QtWidgets.QDialog):
 
     def runCreateCurve(self):
         self.curv, \
-        self.locators, \
+        self.positions, \
         self.ctrl_joints = bridgeBuilder.createCurve("{}_{}_{}".format(self.name_combo.currentText(),
                                                                        self.name_line.text(),
                                                                        self.type_combo.currentText()))
+        return self.curv, self.positions, self.ctrl_joints
 
     def runSetPositionPercentage(self):
-        self.joint_percentage = bridgeBuilder.setPositionPercentage(self.curv, self.locators)
+        self.joint_percentages = bridgeBuilder.setPositionPercentage(self.curv, self.locators)
+        return self.joint_percentages
 
     def runAttachMotionPaths(self):
-        self.motion_paths = bridgeBuilder.attachToMotionPath(self.joint_percentage,
-                                                             self.curv, self.locators,
+        self.motion_paths = bridgeBuilder.attachToMotionPath(joint_percentage_values=self.joint_percentages,
+                                                             curve=self.curv, locators=self.locators,
                                                              ctrl_joints=self.ctrl_joints,
-                                                             rope_type=self.type_combo.currentText())
+                                                             rope_type=self.type_combo.currentText(),
+                                                             rotation=self.rotations_checkbox.isChecked())
+        print("ROPE TYPE: {}".format(self.type_combo.currentText()))
+        return self.motion_paths
     def runBindJoints(self):
         if self.bind_curve_checkbox.isChecked() == True and self.bind_mesh_checkbox.isChecked() == False:
-            bridgeBuilder.bindJoints(self.mesh, self.bind_joints)
+            bridgeBuilder.bindJoints(mesh=self.curv, joints=self.ctrl_joints)
         elif self.bind_mesh_checkbox.isChecked() == True and self.bind_curve_checkbox.isChecked() == False:
-            bridgeBuilder.bindJoints(self.curv, self.ctrl_joints)
+            bridgeBuilder.bindJoints(mesh=self.mesh, joints=self.bind_joints)
         elif self.bind_curve_checkbox.isChecked() == True and self.bind_mesh_checkbox.isChecked() == True:
-            bridgeBuilder.bindJoints(self.mesh, self.bind_joints)
-            bridgeBuilder.bindJoints(self.curv, self.ctrl_joints)
+            bridgeBuilder.bindJoints(mesh=self.mesh, joints=self.bind_joints)
+            bridgeBuilder.bindJoints(mesh=self.curv, joints=self.ctrl_joints)
 
     def checkCheckBoxes(self):
         rope_functions = {
@@ -174,17 +179,20 @@ class RopeUI(QtWidgets.QDialog):
             self.bind_curve_checkbox: self.runBindJoints,
             self.bind_mesh_checkbox: self.runBindJoints
         }
-
         self.button_functions = []
 
         for i in rope_functions:
-            if rope_functions[i].isChecked() == True:
+            if i.isChecked() == True:
                 self.button_functions.append(rope_functions[i])
-        return self.rope_functions
+        return rope_functions, self.button_functions
 
     def runButtonFunctions(self):
+        self.checkCheckBoxes()
+
         for i in self.button_functions:
-            self.button_functions[i]()
+            print(i)
+            i()
+
 
 
 
