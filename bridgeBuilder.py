@@ -230,6 +230,7 @@ def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints=Non
     """
     curve_shape = cmds.listRelatives(curve, shapes=True)[0]
     motion_paths = []
+    print("ROPE TYPE: {}".format(rope_type))
 
     # Iterate through each joint and attach the motion path node with the corresponding percentage value as the uValue
     for i in range(len(locators)):
@@ -254,7 +255,7 @@ def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints=Non
             cmds.connectAttr('{}.rotateZ'.format(motion_paths[i]), '{}.rotateZ'.format(locators[i]))
 
             #Iterate through the control joints and match the transforms of the appropriate locator only if it's a main
-            if "main" in rope_type:
+            if "Main" in rope_type:
                 for c in range(len(ctrl_joints)):
                     print(ctrl_joints)
                     ctrl_zero_group = cmds.listRelatives(ctrl_joints[c], parent=True)[0]
@@ -275,7 +276,7 @@ def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints=Non
                     else:
                         print("FAIL")
 
-            elif "support" in rope_type:
+            elif "Support" in rope_type:
                 #Create a new locator to use as the world up object for the motion path only on the top joint
                 if i == 0:
                     #Get the first control joint to snap the new locator to
@@ -507,7 +508,7 @@ def bindJoints(mesh, joints, rope_type=""):
     cmds.select(clear=True)
     cmds.select(joints, mesh)
     skin_cluster = cmds.skinCluster()[0]
-    if rope_type == "support":
+    if "Support" in rope_type:
         print("CV: {}".format("{}.cv[-1]".format(mesh)))
         print("CTRL JOINT: {}".format(joints[-1]))
         cmds.skinPercent(skin_cluster, "{}.cv[{}]".format(mesh, len(joints)), transformValue = [joints[-1], 1])
