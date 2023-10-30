@@ -1,6 +1,7 @@
 from PySide2 import QtWidgets, QtCore, QtGui
 from functools import partial
 import bridgeBuilder
+import maya.cmds as cmds
 
 
 class RopeUI(QtWidgets.QDialog):
@@ -162,13 +163,24 @@ class RopeUI(QtWidgets.QDialog):
         print("ROPE TYPE: {}".format(self.type_combo.currentText()))
         return self.motion_paths
     def runBindJoints(self):
-        if self.bind_curve_checkbox.isChecked() == True and self.bind_mesh_checkbox.isChecked() == False:
-            bridgeBuilder.bindJoints(mesh=self.curv, joints=self.ctrl_joints)
-        elif self.bind_mesh_checkbox.isChecked() == True and self.bind_curve_checkbox.isChecked() == False:
-            bridgeBuilder.bindJoints(mesh=self.mesh, joints=self.bind_joints)
-        elif self.bind_curve_checkbox.isChecked() == True and self.bind_mesh_checkbox.isChecked() == True:
-            bridgeBuilder.bindJoints(mesh=self.mesh, joints=self.bind_joints)
-            bridgeBuilder.bindJoints(mesh=self.curv, joints=self.ctrl_joints)
+        # Save the skin cluster for the curve and mesh if they exist
+        curve_skin_cluster = [i for i in cmds.listHistory(self.curv) if cmds.objectType(i, isType="skinCluster")]
+        mesh_skin_cluster = [i for i in cmds.listHistory(self.mesh) if cmds.objectType(i, isType="skinCluster")]
+
+        # Check if the object being skinned already has a skin cluster before binding
+        if self.bind_curve_checkbox.isChecked() and not self.bind_mesh_checkbox.isChecked():
+            if not curve_skin_cluster:
+                print("BIND CURVE")
+                bridgeBuilder.bindJoints(mesh=self.curv, joints=self.ctrl_joints)
+        elif self.bind_mesh_checkbox.isChecked() and not self.bind_curve_checkbox.isChecked():
+            if not mesh_skin_cluster:
+                print("BIND MESH")
+                bridgeBuilder.bindJoints(mesh=self.mesh, joints=self.bind_joints)
+        else:
+            if not mesh_skin_cluster and not curve_skin_cluster:
+                print("BINDING CURVE AND MESH")
+                bridgeBuilder.bindJoints(mesh=self.curv, joints=self.ctrl_joints)
+                bridgeBuilder.bindJoints(mesh=self.mesh, joints=self.bind_joints)
 
     def checkCheckBoxes(self):
         rope_functions = {
