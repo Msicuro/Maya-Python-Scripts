@@ -1,13 +1,18 @@
 from PySide2 import QtWidgets, QtCore, QtGui
-from functools import partial
 import bridgeBuilder
 import maya.cmds as cmds
+from maya import OpenMayaUI as omui
+from shiboken2 import wrapInstance
 
+def getMayaMainWindow():
+    window = omui.MQtUtil_mainWindow()
+    pointer = wrapInstance(long(window), QtWidgets.QMainWindow)
+    return pointer
 
 class RopeUI(QtWidgets.QDialog):
-
     def __init__(self):
-        super(RopeUI, self).__init__()
+        parent = getMayaMainWindow()
+        super(RopeUI, self).__init__(parent=parent)
 
         self.setWindowTitle("Rope Builder")
         # self.rope = RopeUI()
