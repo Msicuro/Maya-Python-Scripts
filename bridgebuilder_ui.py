@@ -3,6 +3,7 @@ import bridgeBuilder
 import maya.cmds as cmds
 from maya import OpenMayaUI as omui
 from shiboken2 import wrapInstance
+from functools import partial
 
 def getMayaMainWindow():
     window = omui.MQtUtil_mainWindow()
@@ -15,22 +16,21 @@ class RopeUI(QtWidgets.QDialog):
         super(RopeUI, self).__init__(parent=parent)
 
         self.setWindowTitle("Rope Builder")
-        # self.rope = RopeUI()
 
         self.buildUI()
-        #self-populateUI()
 
     def buildUI(self):
-        # Create parent layout
-        main_layout = QtWidgets.QVBoxLayout(self)
+        # Create parent layout to hold the widgets for each Rope Type
+        parent_layout = QtWidgets.QVBoxLayout(self)
 
-        # Create the name section layout and add it to the main layout
+        # Create the name section layout and add it to the parent layout
         # Name Section
         name_widget = QtWidgets.QWidget()
         name_layout = QtWidgets.QGridLayout(name_widget)
-        main_layout.addWidget(name_widget)
+        parent_layout.addWidget(name_widget)
 
         # Create the elements in the name section and add them to the section
+        # Rope Type Combobox elements are added below when their widget is created
         name_label = QtWidgets.QLabel("Name")
         self.name_combo = QtWidgets.QComboBox()
         self.name_combo.addItem("left")
@@ -38,13 +38,19 @@ class RopeUI(QtWidgets.QDialog):
 
         self.name_line = QtWidgets.QLineEdit()
         self.type_combo = QtWidgets.QComboBox()
-        self.type_combo.addItem("Main Rope")
         self.type_combo.addItem("Support")
 
         name_layout.addWidget(name_label, 0, 0)
         name_layout.addWidget(self.name_combo, 0, 1)
         name_layout.addWidget(self.name_line, 0, 2)
         name_layout.addWidget(self.type_combo, 0, 3)
+
+        # Create a widget and layout for the Main rope type
+        self.main_widget = QtWidgets.QWidget()
+        main_layout = QtWidgets.QVBoxLayout(self.main_widget)
+        parent_layout.addWidget(self.main_widget)
+        # Add the widget to its corresponding combobox
+        self.type_combo.addItem("Main Rope", self.main_widget)
 
         # selectSpans Section
         select_spans_widget = QtWidgets.QWidget()
@@ -61,7 +67,7 @@ class RopeUI(QtWidgets.QDialog):
         #select_verts_text.setAlignment(QtCore.Qt.Alignment(1))
         #select_verts_text.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         select_verts_text.setFont(QtGui.QFont("Arial", 7))
-        print("Size Policy: {}".format(dir(QtWidgets.QSizePolicy())))
+        #print("Size Policy: {}".format(dir(QtWidgets.QSizePolicy())))
 
 
         # createCurve Section
@@ -132,19 +138,27 @@ class RopeUI(QtWidgets.QDialog):
         #     self.name_line.text(),
         #     self.type_combo.currentText()))))
 
-        # Test selectSpans functionality
+        self.main_widget.hide()
+        # Connect button widget functionality
         run_button.clicked.connect(self.runButtonFunctions)
 
+        print("CURRENT DATA: {}".format(self.type_combo.currentData()))
+        print("ITEM DATA 1: {}".format(self.type_combo.itemData(self.type_combo.currentIndex())))
+        self.type_combo.currentIndexChanged.connect(partial(self.toggleWidgetVisibility,
+                                                            self.type_combo.itemData(self.type_combo.currentIndex())))
+        # WHYYY does this not work???
+        #self.type_combo.currentIndexChanged.connect(partial(self.toggleWidgetVisibility, self.type_combo.currentData()))
+
     def runSelectSpans(self):
-        self.bind_joints,\
-        self.locators,\
-        self.spans,\
-        self.name,\
-        self.mesh,\
+        self.bind_joints, \
+        self.locators, \
+        self.spans, \
+        self.name, \
+        self.mesh, \
         self.constructor = bridgeBuilder.selectSpans("{}_{}_{}".format(self.name_combo.currentText(),
                                                                        self.name_line.text(),
-                                                                       self.type_combo.currentText()
-        ))
+                                                                       self.type_combo.currentText()))
+
         return self.bind_joints, self.locators, self.spans, self.name, self.mesh, self.constructor
 
     def runCreateCurve(self):
@@ -210,7 +224,16 @@ class RopeUI(QtWidgets.QDialog):
             print(i)
             i()
 
-
+    def toggleWidgetVisibility(self, show=None, hide=None):
+        # TODO Add error messages if type or hidden status isn't correct
+        print("SHOW: {}".format(show))
+        print("HIDE: {}".format(hide))
+        if isinstance(show, QtWidgets.QWidget):
+            print("SHOW: {}".format(show))
+            show.show()
+        if isinstance(hide, QtWidgets.QWidget):
+            print("HIDE: {}".format(hide))
+            hide.hide()
 
 
 
