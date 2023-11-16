@@ -57,8 +57,7 @@ class RopeUI(QtWidgets.QDialog):
         select_spans_layout = QtWidgets.QGridLayout(select_spans_widget)
         main_layout.addWidget(select_spans_widget)
 
-        self.select_checkbox = QtWidgets.QCheckBox()
-        self.select_checkbox.setText("Create Joints Along Cylinder")
+        self.select_checkbox = QtWidgets.QCheckBox("Create Joints Along Cylinder")
         #self.select_checkbox.setFont(QtGui.QFont( 12))
 
         select_spans_layout.addWidget(self.select_checkbox, 0, 0)
@@ -75,8 +74,7 @@ class RopeUI(QtWidgets.QDialog):
         curve_layout = QtWidgets.QGridLayout(curve_widget)
         main_layout.addWidget(curve_widget)
 
-        self.curve_checkbox = QtWidgets.QCheckBox()
-        self.curve_checkbox.setText("Create Control Curve")
+        self.curve_checkbox = QtWidgets.QCheckBox("Create Control Curve")
 
         curve_layout.addWidget(self.curve_checkbox, 0, 0)
 
@@ -85,8 +83,7 @@ class RopeUI(QtWidgets.QDialog):
         position_percent_layout = QtWidgets.QGridLayout(position_percent_widget)
         main_layout.addWidget(position_percent_widget)
 
-        self.position_percent_checkbox = QtWidgets.QCheckBox()
-        self.position_percent_checkbox.setText("Set Locator Curve Position Percentage")
+        self.position_percent_checkbox = QtWidgets.QCheckBox("Set Locator Curve Position Percentage")
 
         position_percent_layout.addWidget(self.position_percent_checkbox, 0, 0)
 
@@ -96,10 +93,8 @@ class RopeUI(QtWidgets.QDialog):
         motion_path_widget.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         main_layout.addWidget(motion_path_widget)
 
-        self.motion_path_checkbox = QtWidgets.QCheckBox()
-        self.motion_path_checkbox.setText("Attach Locators to Motion Path")
-        self.rotations_checkbox = QtWidgets.QCheckBox()
-        self.rotations_checkbox.setText("Include Motion Path Rotations")
+        self.motion_path_checkbox = QtWidgets.QCheckBox("Attach Locators to Motion Path")
+        self.rotations_checkbox = QtWidgets.QCheckBox("Include Motion Path Rotations")
 
         motion_path_layout.addWidget(self.motion_path_checkbox, 0, 0)
         motion_path_layout.addWidget(self.rotations_checkbox, 1, 0, 1, 2, alignment=QtCore.Qt.AlignCenter)
@@ -110,10 +105,8 @@ class RopeUI(QtWidgets.QDialog):
         bind_layout = QtWidgets.QGridLayout(bind_widget)
         main_layout.addWidget(bind_widget)
 
-        self.bind_curve_checkbox = QtWidgets.QCheckBox()
-        self.bind_curve_checkbox.setText("Bind Curve to Control Joints")
-        self.bind_mesh_checkbox = QtWidgets.QCheckBox()
-        self.bind_mesh_checkbox.setText("Bind Mesh to Locator Joints")
+        self.bind_curve_checkbox = QtWidgets.QCheckBox("Bind Curve to Control Joints")
+        self.bind_mesh_checkbox = QtWidgets.QCheckBox("Bind Mesh to Locator Joints")
 
         bind_layout.addWidget(self.bind_curve_checkbox, 0, 0)
         bind_layout.addWidget(self.bind_mesh_checkbox, 1, 0)
