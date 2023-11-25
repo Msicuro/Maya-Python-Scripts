@@ -32,13 +32,17 @@ class RopeUI(QtWidgets.QDialog):
         # Create the elements in the name section and add them to the section
         # Rope Type Combobox elements are added below when their widget is created
         name_label = QtWidgets.QLabel("Name")
+
         self.name_combo = QtWidgets.QComboBox()
-        self.name_combo.addItem("left")
-        self.name_combo.addItem("right")
+        prefix_names = ["left", "right", "center"]
+        self.name_combo.addItems(prefix_names)
 
         self.name_line = QtWidgets.QLineEdit()
+
         self.type_combo = QtWidgets.QComboBox()
-        self.type_combo.addItem("Support")
+        self.type_widgets = {"Main":QtWidgets.QWidget(), "Support":QtWidgets.QWidget()}
+        self.type_combo.addItems(self.type_widgets.keys())
+        #self.type_combo.addItem("Support")
 
         name_layout.addWidget(name_label, 0, 0)
         name_layout.addWidget(self.name_combo, 0, 1)
@@ -46,11 +50,13 @@ class RopeUI(QtWidgets.QDialog):
         name_layout.addWidget(self.type_combo, 0, 3)
 
         # Create a widget and layout for the Main rope type
-        self.main_widget = QtWidgets.QWidget()
-        main_layout = QtWidgets.QVBoxLayout(self.main_widget)
-        parent_layout.addWidget(self.main_widget)
+        #self.main_widget = QtWidgets.QWidget()
+        main_layout = QtWidgets.QVBoxLayout(self.type_widgets["Main"])
+        #parent_layout.addWidget(self.main_widget)
+        for k, v in self.type_widgets.items():
+            parent_layout.addWidget(v)
         # Add the widget to its corresponding combobox
-        self.type_combo.addItem("Main Rope", self.main_widget)
+        #self.type_combo.addItem("Main Rope", self.main_widget)
 
         # selectSpans Section
         select_spans_widget = QtWidgets.QWidget()
@@ -131,16 +137,26 @@ class RopeUI(QtWidgets.QDialog):
         #     self.name_line.text(),
         #     self.type_combo.currentText()))))
 
-        self.main_widget.hide()
+        #self.main_widget.hide()
         # Connect button widget functionality
         run_button.clicked.connect(self.runButtonFunctions)
 
-        print("CURRENT DATA: {}".format(self.type_combo.currentData()))
-        print("ITEM DATA 1: {}".format(self.type_combo.itemData(self.type_combo.currentIndex())))
-        self.type_combo.currentIndexChanged.connect(partial(self.toggleWidgetVisibility,
-                                                            self.type_combo.itemData(self.type_combo.currentIndex())))
+
+        # self.type_combo.currentIndexChanged.connect(partial(self.toggleWidgetVisibility,
+        #                                                     self.type_combo.itemData(self.type_combo.currentIndex())))
+
         # WHYYY does this not work???
         #self.type_combo.currentIndexChanged.connect(partial(self.toggleWidgetVisibility, self.type_combo.currentData()))
+
+        # def look(*args):
+        #     print(self.type_combo.itemData(self.type_combo.currentIndex()))
+        #     print(self.type_combo.currentData())
+        #     print(args)
+        # self.type_combo.currentIndexChanged.connect(partial(look, self.type_combo.currentData()))
+
+        # Connect type combo box signal for widget visibility
+        self.type_combo.activated.connect(self.typecomboboxCallback)
+
 
     def runSelectSpans(self):
         self.bind_joints, \
@@ -221,6 +237,8 @@ class RopeUI(QtWidgets.QDialog):
         # TODO Add error messages if type or hidden status isn't correct
         print("SHOW: {}".format(show))
         print("HIDE: {}".format(hide))
+        print("CURRENT DATA: {}".format(self.type_combo.currentData()))
+        print("ITEM DATA: {}".format(self.type_combo.itemData(self.type_combo.currentIndex())))
         if isinstance(show, QtWidgets.QWidget):
             print("SHOW: {}".format(show))
             show.show()
@@ -228,6 +246,10 @@ class RopeUI(QtWidgets.QDialog):
             print("HIDE: {}".format(hide))
             hide.hide()
 
+    def typecomboboxCallback(self, key):
+        print(key)
+        for key_index, key_name in enumerate(self.type_widgets.keys()):
+            self.type_widgets[key_name].setVisible(key_index == key)
 
 
 
