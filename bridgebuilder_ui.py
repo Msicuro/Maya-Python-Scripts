@@ -154,6 +154,8 @@ class RopeUI(QtWidgets.QDialog):
         #     print(args)
         # self.type_combo.currentIndexChanged.connect(partial(look, self.type_combo.currentData()))
 
+        # Show the appropriate widget on startup based on the default combobox option
+        self.typecomboboxCallback(self.type_combo.currentIndex())
         # Connect type combo box signal for widget visibility
         self.type_combo.activated.connect(self.typecomboboxCallback)
 
