@@ -21,13 +21,13 @@ class RopeUI(QtWidgets.QDialog):
 
     def buildUI(self):
         # Create parent layout to hold the widgets for each Rope Type
-        parent_layout = QtWidgets.QVBoxLayout(self)
+        self.parent_layout = QtWidgets.QVBoxLayout(self)
 
         # Create the name section layout and add it to the parent layout
         # Name Section
         name_widget = QtWidgets.QWidget()
         name_layout = QtWidgets.QGridLayout(name_widget)
-        parent_layout.addWidget(name_widget)
+        self.parent_layout.addWidget(name_widget)
 
         # Create the elements in the name section and add them to the section
         # Rope Type Combobox elements are added below when their widget is created
