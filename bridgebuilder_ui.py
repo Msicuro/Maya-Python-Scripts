@@ -219,7 +219,8 @@ class RopeUI(QtWidgets.QDialog):
             self.position_percent_checkbox: self.runSetPositionPercentage,
             self.motion_path_checkbox: self.runAttachMotionPaths,
             self.bind_curve_checkbox: self.runBindJoints,
-            self.bind_mesh_checkbox: self.runBindJoints
+            self.bind_mesh_checkbox: self.runBindJoints,
+            self.support_rope_checkbox: self.createSupportRopes
         }
         self.button_functions = []
 
