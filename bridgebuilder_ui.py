@@ -119,9 +119,18 @@ class RopeUI(QtWidgets.QDialog):
 
         # Run Button
         run_button = QtWidgets.QPushButton("Run")
-        main_layout.addWidget(run_button)
+        self.parent_layout.addWidget(run_button)
 
-        # Set font size for function widgets
+        # Create the Support Rope components
+        support_rope_widget = QtWidgets.QWidget()
+        support_rope_layout = QtWidgets.QGridLayout(support_rope_widget)
+        support_layout.addWidget(support_rope_widget)
+
+        self.support_rope_checkbox = QtWidgets.QCheckBox("Create Support Ropes")
+
+        support_rope_layout.addWidget(self.support_rope_checkbox, 0, 0)
+
+        # Set font size for individual function widgets
         main_font_size = 18
         select_spans_widget.setStyleSheet("font-size: {}px".format(main_font_size))
         curve_widget.setStyleSheet("font-size: {}px".format(main_font_size))
@@ -129,7 +138,10 @@ class RopeUI(QtWidgets.QDialog):
         self.motion_path_checkbox.setStyleSheet("font-size: {}px".format(main_font_size))
         self.rotations_checkbox.setStyleSheet("font-size: 12px")
         bind_widget.setStyleSheet("font-size: {}px".format(main_font_size))
+        support_rope_widget.setStyleSheet("font-size: {}px".format(main_font_size))
         run_button.setStyleSheet("font-size: {}px".format(main_font_size))
+
+
 
         # Test button functionality
         # rope_stats = run_button.clicked.connect(partial(bridgeBuilder.selectSpans("{}_{}_{}".format(
