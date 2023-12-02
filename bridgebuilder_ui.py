@@ -224,6 +224,46 @@ class RopeUI(QtWidgets.QDialog):
                 bridgeBuilder.bindJoints(mesh=self.curv, joints=self.ctrl_joints)
                 bridgeBuilder.bindJoints(mesh=self.mesh, joints=self.bind_joints)
 
+    def createSupportRopes(self):
+        support_meshes = cmds.ls(sl=1)
+        mesh_num = 0
+        # Turn on the rotation checkbox so the rotations on motion paths are enabled
+        self.rotations_checkbox.setChecked(1)
+
+        # Iterate through each selected mesh and create the support rope
+        for i in support_meshes:
+            name = "{}_{}_{}".format(self.name_combo.currentText(), self.name_line.text(), mesh_num,
+                                                                        self.type_combo.currentText())
+
+            cmds.select(i)
+            self.runSelectSpans()
+            # Create the group for the locators
+            loc_group = cmds.group(self.locators, name="{}_LOC_GRP".format(name))
+
+            cmds.select(self.locators[0::2])
+            self.runCreateCurve()
+            # Run the build supports function
+            new_ik_handle, new_ik_ctrl, new_pvector = bridgeBuilder.buildSupport(self.ctrl_joints)
+
+            self.runSetPositionPercentage()
+            self.runAttachMotionPaths()
+
+            bridgeBuilder.addStretchyIK(self.ctrl_joints)
+
+            support_ctrl_jnt_grps = [i for i in cmds.listRelatives(self.ctrl_joints[0::], p=1) if cmds.objectType(i) == "transform"]
+            support_ik_GRP = cmds.listRelatives(new_pvector, ap=1, f=1)[0].split("|")[1]
+            cmds.group(self.mesh, loc_group, support_ctrl_jnt_grps, self.curv, support_ik_GRP, name="{}_GRP".format(name))
+
+            self.runBindJoints()
+            self.runBindJoints()
+
+            mesh_num +=1
+
+        # Turn off the rotations for motion paths after the function completes
+        self.rotations_checkbox.setChecked(0)
+
+
+
     def checkCheckBoxes(self):
         rope_functions = {
             self.select_checkbox: self.runSelectSpans,
