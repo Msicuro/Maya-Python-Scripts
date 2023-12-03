@@ -40,23 +40,32 @@ class RopeUI(QtWidgets.QDialog):
         self.name_line = QtWidgets.QLineEdit()
 
         self.type_combo = QtWidgets.QComboBox()
+
+        # Create widgets for the tool functions (Main & Support)
         self.type_widgets = {"Main":QtWidgets.QWidget(), "Support":QtWidgets.QWidget()}
-        self.type_combo.addItems(self.type_widgets.keys())
-        #self.type_combo.addItem("Support")
+        # Add the keys for each tool widget to the type combo box
+        self.type_combo.addItems(sorted(self.type_widgets))
+
 
         name_layout.addWidget(name_label, 0, 0)
         name_layout.addWidget(self.name_combo, 0, 1)
         name_layout.addWidget(self.name_line, 0, 2)
         name_layout.addWidget(self.type_combo, 0, 3)
 
-        # Create a widget and layout for the Main rope type
+        # Create a widget for the Main rope type
         #self.main_widget = QtWidgets.QWidget()
+        # Create vertical layouts for the rope types
         main_layout = QtWidgets.QVBoxLayout(self.type_widgets["Main"])
-        #parent_layout.addWidget(self.main_widget)
-        for k, v in self.type_widgets.items():
-            parent_layout.addWidget(v)
+        support_layout = QtWidgets.QVBoxLayout(self.type_widgets["Support"])
+
+        # Add the widgets from the type combo box to the parent layout
+        #self.parent_layout.addWidget(self.main_widget)
+        for i in sorted(self.type_widgets):
+            self.parent_layout.addWidget(self.type_widgets[i])
         # Add the widget to its corresponding combobox
         #self.type_combo.addItem("Main Rope", self.main_widget)
+
+        # Create the Main Rope components
 
         # selectSpans Section
         select_spans_widget = QtWidgets.QWidget()
