@@ -303,8 +303,12 @@ class RopeUI(QtWidgets.QDialog):
 
     def typecomboboxCallback(self, key):
         print(key)
-        for key_index, key_name in enumerate(self.type_widgets.keys()):
+        for key_index, key_name in enumerate(sorted(self.type_widgets)):
             self.type_widgets[key_name].setVisible(key_index == key)
+
+        self.resize(QtWidgets.QWidget.minimumSizeHint(self))
+
+
 
 
 
