@@ -82,7 +82,6 @@ def updateTextBox(textfield, *args):
 
 
 def runPVCommand(*args):
-    print(cmds.textField("start", q=1))
 
     place_pole_vector_ctrl(
         start=cmds.textField("start", q=1, text=1),
