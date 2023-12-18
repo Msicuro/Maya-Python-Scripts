@@ -167,6 +167,7 @@ class RopeUI(QtWidgets.QDialog):
 
         return self.bind_joints, self.locators, self.spans, self.name, self.mesh, self.constructor
 
+    # Create functions corresponding to bridgeBuilder functions so checkboxes can store/execute them
     def runCreateCurve(self):
         self.curv, \
         self.positions, \
@@ -187,6 +188,7 @@ class RopeUI(QtWidgets.QDialog):
                                                              rotation=self.rotations_checkbox.isChecked())
         print("ROPE TYPE: {}".format(self.type_combo.currentText()))
         return self.motion_paths
+
     def runBindJoints(self):
         # Save the skin cluster for the curve and mesh if they exist
         curve_skin_cluster = [i for i in cmds.listHistory(self.curv) if cmds.objectType(i, isType="skinCluster")]
@@ -248,6 +250,13 @@ class RopeUI(QtWidgets.QDialog):
 
 
     def checkCheckBoxes(self):
+        '''
+        Checks the "checked" status of each checkbox so they can be executed later
+        Returns:
+            rope_functions: A dictionary of each checkbox with the corresponding function
+            button_functions: A list of all functions matched with checkboxes that are checked
+
+        '''
         rope_functions = {
             self.select_checkbox: self.runSelectSpans,
             self.curve_checkbox: self.runCreateCurve,
@@ -265,6 +274,10 @@ class RopeUI(QtWidgets.QDialog):
         return rope_functions, self.button_functions
 
     def runButtonFunctions(self):
+        '''
+        Goes through the button_functions list and runs each function
+
+        '''
         self.checkCheckBoxes()
 
         for i in self.button_functions:
@@ -272,6 +285,13 @@ class RopeUI(QtWidgets.QDialog):
             i()
 
     def toggleWidgetVisibility(self, show=None, hide=None):
+        '''
+        Toggles the visibility of widgets
+        Args:
+            show: The widget to show
+            hide: The widget to hide
+
+        '''
         # TODO Add error messages if type or hidden status isn't correct
         print("SHOW: {}".format(show))
         print("HIDE: {}".format(hide))
@@ -285,6 +305,12 @@ class RopeUI(QtWidgets.QDialog):
             hide.hide()
 
     def typecomboboxCallback(self, key):
+        '''
+        Sets the visibility of a widget when called after a combobox is activated
+        Args:
+            key: A key passed from the type_combobox dictionary
+
+        '''
         print(key)
         for key_index, key_name in enumerate(sorted(self.type_widgets)):
             self.type_widgets[key_name].setVisible(key_index == key)
