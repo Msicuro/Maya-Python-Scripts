@@ -42,6 +42,8 @@ def selectSpans(joint_name, verts_in_span=None):
     elif cmds.objectType(shape_node, isType="mesh"):
         if not verts_in_span:
             verts_in_span = cmds.getAttr("{}.subdivisionsAxis".format(constructor))
+        print("CONSTUCTOR: {}".format(constructor))
+        print("VERTS IN SPAN: {}".format(verts_in_span))
         num_of_spans = int(len(all_verts) / verts_in_span)
 
         # Select vertices in bulk based on the number of vertices per span and create a joint at the center point before
@@ -607,17 +609,21 @@ def buildRope(side):
         bridgeBuilder.bindJoints(curve, ctrl_joints)
 
     elif type == "support":
+        # List selected meshes
         left_supports = cmds.ls(sl=1)
         support_number = 0
         for i in left_supports:
+            # Select iterted mesh and run selectSpans
             cmds.select(i)
             bind_joints, locators, spans, name, mesh = bridgeBuilder.selectSpans(20,
                                                                                  "{}_{}_{}_{}".format(side[0], type[1],
                                                                                                       support_number,
                                                                                                       rope_name))
+            # Create a group for locators made from selectSpans
             locators_group = cmds.group(locators,
                                         n="{}_{}_{}_{}_LOC_GRP".format(side[0], type[1], support_number, rope_name))
 
+            # Select the first, middle and last locators for the curve and ctrl ik joints
             cmds.select(locators[0::2])
             curve, positions, ctrl_joints = bridgeBuilder.createCurve(
                 "{}_{}_{}_{}".format(side[0], type[1], support_number, rope_name))
@@ -627,8 +633,10 @@ def buildRope(side):
             motion_paths = bridgeBuilder.attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints,
                                                             rotation=True, rope_type="support")
 
+            # Add stretchy IK to the ctrl joints
             bridgeBuilder.addStretchyIK(ctrl_joints)
 
+            # Group the locators together by their parent groups
             support_ctrl_jnt_GRPs = [i for i in cmds.listRelatives(ctrl_joints[0::], p=1) if
                                      cmds.objectType(i) == "transform"]
             support_ik_GRP = cmds.listRelatives(new_pvector, ap=1, f=1)[0].split("|")[1]
