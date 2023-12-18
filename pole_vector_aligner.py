@@ -2,9 +2,12 @@ from maya import cmds
 from maya.api import OpenMaya
 from functools import partial
 
+# This tool is intended to be used by artists directly can be run directly from the script editor or a shelf button
 
 def get_pos_as_mvector(node):
-    """Get a transform position as an MVector instance.
+    """
+    From: https://mykolbe.wordpress.com/2020/09/03/rig-fundamentals-polevector/
+    Get a transform position as an MVector instance.
 
     Args:
         node (str): Name of transform.
@@ -51,22 +54,30 @@ def place_pole_vector_ctrl(pv_ctrl, start, mid, end, shift_factor=2):
 
 
 def createWindow():
-    window = cmds.window(title="Align Pole Vector")
+    '''
+    Create the window that holds the labels, textboxes and function buttons
 
+    '''
+    # Create the basic window setup
+    window = cmds.window(title="Align Pole Vector")
     cmds.rowColumnLayout(numberOfColumns=3, columnAttach=(1, 'right', 0), columnWidth=[(1, 100), (2, 250)])
 
+    # Create the IK Start Joint input section
     cmds.text(label='IK Start Joint')
     start_field = cmds.textField("start")
     cmds.button(label="<<", command=partial(updateTextBox, start_field))
 
+    # Create the IK Mid Joint input section
     cmds.text(label='IK Mid Joint')
     mid_field = cmds.textField("mid")
     cmds.button(label="<<", command=partial(updateTextBox, mid_field))
 
+    # Create the IK End Joint input section
     cmds.text(label='IK End Joint')
     end_field = cmds.textField("end")
     cmds.button(label="<<", command=partial(updateTextBox, end_field))
 
+    # Create the Pole Vector input section
     cmds.text(label='Pole Vector CTRL')
     pvector_field = cmds.textField("pvctrl")
     cmds.button(label="<<", command=partial(updateTextBox, pvector_field))
@@ -77,11 +88,21 @@ def createWindow():
 
 
 def updateTextBox(textfield, *args):
+    '''
+    Updates the body of the provided text field with the name of any currently selected item
+    Args:
+        textfield: Name of the text field to be updated
+
+    '''
     selection = cmds.ls(sl=1)[0]
     add = cmds.textField(textfield, edit=True, text=selection)
 
 
 def runPVCommand(*args):
+    '''
+    Runs the place_pole_vector_ctrl function with the textbox fields already passed as arguments
+
+    '''
 
     place_pole_vector_ctrl(
         start=cmds.textField("start", q=1, text=1),
