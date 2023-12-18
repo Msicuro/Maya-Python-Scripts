@@ -20,16 +20,20 @@ class RopeUI(QtWidgets.QDialog):
         self.buildUI()
 
     def buildUI(self):
+        '''
+        Builds the UI elements to allow functions from bridgeBuilder to run
+
+        '''
+
         # Create parent layout to hold the widgets for each Rope Type
         self.parent_layout = QtWidgets.QVBoxLayout(self)
 
-        # Create the name section layout and add it to the parent layout
-        # Name Section
+        # Create the Rig name section layout and add it to the parent layout
         name_widget = QtWidgets.QWidget()
         name_layout = QtWidgets.QGridLayout(name_widget)
         self.parent_layout.addWidget(name_widget)
 
-        # Create the elements in the name section and add them to the section
+        # Create the elements in the Rig name section
         # Rope Type Combobox elements are added below when their widget is created
         name_label = QtWidgets.QLabel("Name")
 
@@ -43,66 +47,54 @@ class RopeUI(QtWidgets.QDialog):
 
         # Create widgets for the tool functions (Main & Support)
         self.type_widgets = {"Main":QtWidgets.QWidget(), "Support":QtWidgets.QWidget()}
-        # Add the keys for each tool widget to the type combo box
+        # Add the keys for each tool widget to the Type combo box
         self.type_combo.addItems(sorted(self.type_widgets))
-
 
         name_layout.addWidget(name_label, 0, 0)
         name_layout.addWidget(self.name_combo, 0, 1)
         name_layout.addWidget(self.name_line, 0, 2)
         name_layout.addWidget(self.type_combo, 0, 3)
 
-        # Create a widget for the Main rope type
-        #self.main_widget = QtWidgets.QWidget()
-        # Create vertical layouts for the rope types
+
+        # Create vertical layouts for the rope types menu options
         main_layout = QtWidgets.QVBoxLayout(self.type_widgets["Main"])
         support_layout = QtWidgets.QVBoxLayout(self.type_widgets["Support"])
 
-        # Add the widgets from the type combo box to the parent layout
-        #self.parent_layout.addWidget(self.main_widget)
+        # Add the widgets from the Type combo box to the parent layout
         for i in sorted(self.type_widgets):
             self.parent_layout.addWidget(self.type_widgets[i])
-        # Add the widget to its corresponding combobox
-        #self.type_combo.addItem("Main Rope", self.main_widget)
 
-        # Create the Main Rope components
+        # Create the Main Rope menu components
 
-        # selectSpans Section
+        # Setup selectSpans Section for the selectSpans function
         select_spans_widget = QtWidgets.QWidget()
         select_spans_layout = QtWidgets.QGridLayout(select_spans_widget)
         main_layout.addWidget(select_spans_widget)
 
         self.select_checkbox = QtWidgets.QCheckBox("Create Joints Along Cylinder")
-        #self.select_checkbox.setFont(QtGui.QFont( 12))
-
         select_spans_layout.addWidget(self.select_checkbox, 0, 0)
 
         select_verts_text = QtWidgets.QLabel("Subdivision Axis: ")
-        #select_verts_text.setAlignment(QtCore.Qt.Alignment(1))
-        #select_verts_text.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         select_verts_text.setFont(QtGui.QFont("Arial", 7))
-        #print("Size Policy: {}".format(dir(QtWidgets.QSizePolicy())))
 
 
-        # createCurve Section
+        # Setup createCurve Section for the createCurve function
         curve_widget = QtWidgets.QWidget()
         curve_layout = QtWidgets.QGridLayout(curve_widget)
         main_layout.addWidget(curve_widget)
 
         self.curve_checkbox = QtWidgets.QCheckBox("Create Control Curve")
-
         curve_layout.addWidget(self.curve_checkbox, 0, 0)
 
-        # Position Percentage section
+        # Setup Position Percentage section for the setPositionPercentage function
         position_percent_widget = QtWidgets.QWidget()
         position_percent_layout = QtWidgets.QGridLayout(position_percent_widget)
         main_layout.addWidget(position_percent_widget)
 
         self.position_percent_checkbox = QtWidgets.QCheckBox("Set Locator Curve Position Percentage")
-
         position_percent_layout.addWidget(self.position_percent_checkbox, 0, 0)
 
-        # Attach to Motion Path section
+        # Setup Attach to Motion Path section fir the attachToMotionPath function
         motion_path_widget = QtWidgets.QWidget()
         motion_path_layout = QtWidgets.QGridLayout(motion_path_widget)
         motion_path_widget.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
@@ -115,7 +107,7 @@ class RopeUI(QtWidgets.QDialog):
         motion_path_layout.addWidget(self.rotations_checkbox, 1, 0, 1, 2, alignment=QtCore.Qt.AlignCenter)
 
 
-        # Bind section
+        # Setup Bind section for the bindJoints function
         bind_widget = QtWidgets.QWidget()
         bind_layout = QtWidgets.QGridLayout(bind_widget)
         main_layout.addWidget(bind_widget)
@@ -126,20 +118,22 @@ class RopeUI(QtWidgets.QDialog):
         bind_layout.addWidget(self.bind_curve_checkbox, 0, 0)
         bind_layout.addWidget(self.bind_mesh_checkbox, 1, 0)
 
-        # Run Button
+        # Setup Run Button to execute selected commands
         run_button = QtWidgets.QPushButton("Run")
         self.parent_layout.addWidget(run_button)
 
-        # Create the Support Rope components
+
+        # Create the Support Rope menu components
+
+        # Setup Support Rope Section for the supportRope function
         support_rope_widget = QtWidgets.QWidget()
         support_rope_layout = QtWidgets.QGridLayout(support_rope_widget)
         support_layout.addWidget(support_rope_widget)
 
         self.support_rope_checkbox = QtWidgets.QCheckBox("Create Support Ropes")
-
         support_rope_layout.addWidget(self.support_rope_checkbox, 0, 0)
 
-        # Set font size for individual function widgets
+        # Set font size for the individual function widgets
         main_font_size = 18
         select_spans_widget.setStyleSheet("font-size: {}px".format(main_font_size))
         curve_widget.setStyleSheet("font-size: {}px".format(main_font_size))
@@ -151,33 +145,13 @@ class RopeUI(QtWidgets.QDialog):
         run_button.setStyleSheet("font-size: {}px".format(main_font_size))
 
 
-
-        # Test button functionality
-        # rope_stats = run_button.clicked.connect(partial(bridgeBuilder.selectSpans("{}_{}_{}".format(
-        #     self.name_combo.currentText(),
-        #     self.name_line.text(),
-        #     self.type_combo.currentText()))))
-
-        #self.main_widget.hide()
-        # Connect button widget functionality
+        # Connect the Run button to the widget functions
         run_button.clicked.connect(self.runButtonFunctions)
-
-
-        # self.type_combo.currentIndexChanged.connect(partial(self.toggleWidgetVisibility,
-        #                                                     self.type_combo.itemData(self.type_combo.currentIndex())))
-
-        # WHYYY does this not work???
-        #self.type_combo.currentIndexChanged.connect(partial(self.toggleWidgetVisibility, self.type_combo.currentData()))
-
-        # def look(*args):
-        #     print(self.type_combo.itemData(self.type_combo.currentIndex()))
-        #     print(self.type_combo.currentData())
-        #     print(args)
-        # self.type_combo.currentIndexChanged.connect(partial(look, self.type_combo.currentData()))
 
         # Show the appropriate widget on startup based on the default combobox option
         self.typecomboboxCallback(self.type_combo.currentIndex())
-        # Connect type combo box signal for widget visibility
+
+        # Connect the Type combo box signal to control menu type visibility
         self.type_combo.activated.connect(self.typecomboboxCallback)
 
 
