@@ -67,7 +67,7 @@ def createWindow():
     end_field = cmds.textField("end")
     cmds.button(label="<<", command=partial(updateTextBox, end_field))
 
-    cmds.text(label='Polve Vector CTRL')
+    cmds.text(label='Pole Vector CTRL')
     pvector_field = cmds.textField("pvctrl")
     cmds.button(label="<<", command=partial(updateTextBox, pvector_field))
 
