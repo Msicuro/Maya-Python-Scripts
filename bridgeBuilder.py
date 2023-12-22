@@ -14,10 +14,11 @@ def selectSpans(joint_name, verts_in_span=None):
     """
     Creates joints at center of each span of a cylinder using the number of vertices that make up each span
     Args:
-        verts_in_span: The number of vertices that make up one edge loop/span
+        verts_in_span: The number of vertices that make up one edge loop/span (if a constructor node is present on a
+        polygon mesh, the subdivisionsAxis attribute will be used)
         joint_name: The preferred name for the newly created joints
     Returns:
-        mesh_bind_joints, locators, spans, joint_name, mesh
+        mesh_bind_joints, locators, spans, joint_name, mesh, constructor
     """
     all_verts, mesh, constructor = selectAllVerts()
 
@@ -77,7 +78,7 @@ def selectSpans(joint_name, verts_in_span=None):
 
 def addLocators(joints, name=""):
     """
-    Creates locators at the selected positions based on a list of joints (or any selected objects with transforms)
+    Creates locators at the selected positions based on a list of transforms
     Args:
         joints: Any joints or transforms for locator positions
     Returns:
@@ -123,15 +124,15 @@ def createCurve(name=""):
     # Create the curve with CVs at the positions of the control joints
     curve = cmds.curve(point=positions, n="{}_CRV".format(name))
 
-    # Bind the control joints to the curve
-    #cmds.select(control_joints, curve)
-    #cmds.SmoothBindSkin()
-
     return curve, positions, control_joints
 
 def selectAllVerts():
     """
     Lists and returns all vertices on the selected mesh or nurbsSurface
+    Returns:
+        all_vertices: A list of the vertices collected
+        selection: The selected mesh
+        constructor_node: The constructor node of the mesh
     """
     selection = cmds.ls(selection=True)
     shape_node = cmds.listRelatives(selection, s=True)[0]
@@ -163,7 +164,7 @@ def centerJoint(name):
     # Divide the updated position by the total number of selected objects
     pos = [e/val for e in pos]
     cmds.select(cl=1)
-    # Divide the updated positions by 2 to get the final position (center of the bounding box of all the selected objects put together?)
+    # Divide the updated positions by 2 to get the final position (center of the bounding box of all the selected objects put together)
     jnt = cmds.joint(p=((pos[0]+pos[3])/2, (pos[1] + pos[4])/2, (pos[2]+pos[5])/2), name="{}_JNT".format(name))
     cmds.select(sel, r=1)
     return jnt
@@ -223,12 +224,15 @@ def setPositionPercentage(curve, locators):
 
 def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints=None, rope_type="main", rotation=False):
     """
-    Attaches a motion path node to the locators above the mesh joints using the percentage value from setPositionPercentage()
+    Attaches a motion path node to the locators above each mesh joint using the percentage value from the
+    setPositionPercentage function
     Args:
         joint_percentage_values: The percentage values of transforms along the curve taken from setPositionPercentage()
         curve: The base curve
         locators: The locators parented above the joints skinned to the mesh
         ctrl_joints: The control joints to re-orient to match the bind joints/locators
+    Returns:
+        motion_paths: List of motion path nodes created
     """
     curve_shape = cmds.listRelatives(curve, shapes=True)[0]
     motion_paths = []
@@ -322,6 +326,12 @@ def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints=Non
     return motion_paths
 
 def createSupports(bind_joints, locators):
+    '''
+    Creates a curve and connects motionPath and Nearest Point on Curve nodes for a vertical cylinder
+    Args:
+        locators: The locators from the selectSpans function corresponding to the bind joint positions
+
+    '''
     # Run selectSpans separately
 
     # Select the outer and middle bind joints for the control joints using the bind joints created from selectSpans
@@ -365,6 +375,13 @@ def createSupports(bind_joints, locators):
 
 
 def setupNPOCPath(curve, locators):
+    '''
+    Separately create the Nearest Point on Curve and motionPath connections
+    Args:
+        curve: The control curve
+        locators: The locators from the selectSpans function corresponding to the bind joint positions
+
+    '''
     curve_shape = cmds.listRelatives(curve, shapes=True)[0]
     motion_paths = []
     # Create the nPOC and motionPath nodes using the locators created from selectSpans
@@ -387,17 +404,20 @@ def setupNPOCPath(curve, locators):
         # Connect the motionPaths Coordinates attribute into the locator
         cmds.connectAttr('{}.allCoordinates'.format(motion_paths[i]), '{}.translate'.format(locators[i]))
 def buildSupport(ctrl_joints, increment=0):
-    # Create bind joints on mesh
-        # Run selectSpans
-    # Create 5 control joints, 3 for the ik and two to stay in between and manage the curve shape
-    # Create the curve with those 5 control joints
-    # Bind the control joints to the curve
-        # Run createCurve with the 5 joints selected
-    # Parent the last joint to the middle, and the middle to the top joint
+    '''
+    Creates 5 joints with an IK chain to control tethered cylinders
+    Args:
+        ctrl_joints: The control joints from the createCurve function
+
+    Returns:
+        new_ik_handle, new_ik_ctrl, new_pvector: The IK handle, IK control and pole vector for the cylinder
+    '''
+    # Identify the updated name, IK joints and the middle index to isolate the center joint
     new_base_name = str(ctrl_joints[0]).split("0")[0]
 
     ik_joints = ctrl_joints[::2]
     middle_index = int(len(ik_joints) / 2)
+
     # Save the existing parent groups for the IK joints to delete
     middle_joint_group = cmds.ls(ik_joints[middle_index], long=True)[0].split('|')[1:-1][0]
     last_joint_group = cmds.ls(ik_joints[-1], long=True)[0].split('|')[1:-1][0]
@@ -420,8 +440,6 @@ def buildSupport(ctrl_joints, increment=0):
     cmds.rotate(90, 0, 0, r=1, os=1, fo=1)
 
     cmds.parent(new_ik_handle[0], new_ik_ctrl[0])
-    # Create Group nodes above the control joints
-    #ik_joint_group = buffer.createTwo(ik_joints[0])
 
     # Point constrain the remaining group nodes above the two joints (which should be separate) to the appropriate ik control joints
     mid_joints = ctrl_joints[1::2]
@@ -451,45 +469,62 @@ def buildSupport(ctrl_joints, increment=0):
     #Group the pole vector and ik control
     ik_group = cmds.group(pvector_group, n="{}{}_IK_GRP".format(new_base_name,increment))
     cmds.parent(ik_ctrl_group, ik_group)
-    #cmds.parent(ik_joint_group, ik_group)
 
     return new_ik_handle, new_ik_ctrl, new_pvector
 
 
 def bindPlanks(boards):
-    # Select the vertices on each side of the plank
-    # Create a joint in the center on each side
-    # Bind the joints to the board
-    # Create a Buffer group above the joints
-    # Parent constrain the Buffer groups to the corresponding locator on the rope
+    '''
+    Create joints and buffer groups on either side of a poly cube
+    Args:
+        boards: A list of poly cube meshes
+    Returns:
+        left_joints, right_joints: Lists of the left and right joints on either sides of the poly cubes
+    '''
+
     left_joints = []
     right_joints = []
     for i in boards:
+        # Select all verts on the board
         cmds.select(i)
         all_vertices, selection = selectAllVerts()
 
+        # Select just the left side verts and create a joint
         cmds.select(all_vertices[1::2])
         left_joint = centerJoint("left_" + str(i))
         left_joints.append(left_joint)
 
+        # Create a group for the left side joint
         left_grp = cmds.group(empty=True, n=left_joint + "_BUFF_GRP")
         cmds.delete(cmds.parentConstraint(left_joint, left_grp))
         cmds.parent(left_joint, left_grp)
 
+        # Select just the right side verts and create a joint
         cmds.select(all_vertices[0::2])
         right_joint = centerJoint("right_" + str(i))
         right_joints.append(right_joint)
 
+        # Create a group for the right side joint
         right_grp = cmds.group(empty=True, n=right_joint + "_BUFF_GRP")
         cmds.delete(cmds.parentConstraint(right_joint, right_grp))
         cmds.parent(right_joint, right_grp)
 
+        # Bind the joints
         cmds.select(left_joint, right_joint, i)
         cmds.SmoothBindSkin()
 
     return left_joints, right_joints
 
 def createControls(ctrl_joints, name):
+    '''
+    Creates vertical nurbs circles at given points
+    Args:
+        ctrl_joints: A list of joints corresponding to the new controls
+        name: Intended name for the controls
+
+    Returns:
+        controls: A list of created controls
+    '''
     inc = 1
     controls = []
     for i in ctrl_joints:
@@ -507,6 +542,14 @@ def createControls(ctrl_joints, name):
     return controls
 
 def bindJoints(mesh, joints, rope_type=""):
+    '''
+    Bind joints to a single mesh with the rope "type" taken into account
+    Args:
+        mesh: The mesh to bind to
+        joints: A list of joints to bind
+        rope_type: The type of rope (with the bridge functionality in mind). If "Support", joint values will be set
+        to 1 on each CV to avoid uneven weights
+    '''
     cmds.select(clear=True)
     cmds.select(joints, mesh)
     skin_cluster = cmds.skinCluster()[0]
@@ -517,20 +560,29 @@ def bindJoints(mesh, joints, rope_type=""):
 
 
 def addStretchyIK(ctrl_joints):
+    '''
+    Create stretchy IK using the side lengths of the triangle made up of the IK joints
+    Args:
+        ctrl_joints: List of control joints
+    '''
     # Get the upperarm length
     upperarm_length = cmds.getAttr("{}.translateX".format(ctrl_joints[2]))
     # Get the lowerarm length
     lowerarm_length = cmds.getAttr("{}.translateX".format(ctrl_joints[4]))
+
     # Add the shoulder and elbow joint length for the arm length
     arm_length = upperarm_length+lowerarm_length
+
     # Create locators at the shoulder and wrist
     arm_joints = [ctrl_joints[0], ctrl_joints[-1]]
     stretch_locators = addLocators(arm_joints, name=arm_joints[0].replace("CTRL", "STRCH").replace("JNT_", ""))
+
     # Create distance node for arm distance (distance between the shoulder and wrist)
     arm_distance = cmds.shadingNode("distanceBetween", asUtility=True)
     # Connect top and bottom locators to Distance node
     cmds.connectAttr("{}.worldPosition[0]".format(cmds.listRelatives(stretch_locators[0], s=True)[0]), "{}.point1".format(arm_distance))
     cmds.connectAttr("{}.worldPosition[0]".format(cmds.listRelatives(stretch_locators[1], s=True)[0]), "{}.point2".format(arm_distance))
+
     # Create a multiplyDivide node (set to divide) and name it distance_divider
     arm_divider = cmds.shadingNode("multiplyDivide", asUtility=True, n="distance_divider")
     cmds.setAttr("{}.operation".format(arm_divider), 2)
@@ -538,6 +590,7 @@ def addStretchyIK(ctrl_joints):
     cmds.setAttr("{}.input2X".format(arm_divider), upperarm_length+lowerarm_length)
         # Plug the distance from the arm distance dimension node into the input1 of the divider
     cmds.connectAttr("{}.distance".format(arm_distance), "{}.input1X".format(arm_divider))
+
     # Create two multDoubleLiner nodes, one for the upperarm and one for the lowerarm
     upperarm_multiplier = cmds.shadingNode("multDoubleLinear", asUtility=True)
     lowerarm_multiplier = cmds.shadingNode("multDoubleLinear", asUtility=True)
@@ -548,6 +601,7 @@ def addStretchyIK(ctrl_joints):
     cmds.setAttr("{}.input2".format(upperarm_multiplier), upperarm_length)
         # Set input2 of the lowerarm multipler to the length of the lowerarm (wrist X value)
     cmds.setAttr("{}.input2".format(lowerarm_multiplier), lowerarm_length)
+
     # Create two condition nodes, one for the upperarm and one for the lowerarm
     upperarm_condition = cmds.shadingNode("condition", asUtility=True)
     lowerarm_condition = cmds.shadingNode("condition", asUtility=True)
@@ -583,67 +637,3 @@ def addStretchyIK(ctrl_joints):
     ctrl_joint_parent_grp = cmds.listRelatives(ctrl_joints[0], parent=True)
     # Parent the 1st locator under the ik joint parent group
     cmds.parent(stretch_locators[0], ctrl_joint_parent_grp)
-
-
-def buildRope(side):
-    side = ["left", "right"]
-    type = ["main", "support"]
-    rope_name = "ropey_rope"
-
-    if type == "main":
-        # Select mesh
-        bind_joints, locators, spans, name, mesh = bridgeBuilder.selectSpans(20, "{}_{}_{}".format(side[0], type[0],
-                                                                                                   rope_name))
-
-        # Select transforms to be used as control joints
-        curve, positions, ctrl_joints = bridgeBuilder.createCurve("{}_{}_{}".format(side[0], type[0], rope_name))
-
-        # Run setPositionPercentage using the curve and joints variables from the first two functions
-        joint_percentage_values = bridgeBuilder.setPositionPercentage(curve, locators)
-
-        # Run attachToMotionPath using the joint percentage values, curve and joints variables from the previous functions
-        motion_paths = bridgeBuilder.attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints,
-                                                        rotation=True)
-
-        bridgeBuilder.bindJoints(mesh, bind_joints)
-        bridgeBuilder.bindJoints(curve, ctrl_joints)
-
-    elif type == "support":
-        # List selected meshes
-        left_supports = cmds.ls(sl=1)
-        support_number = 0
-        for i in left_supports:
-            # Select iterted mesh and run selectSpans
-            cmds.select(i)
-            bind_joints, locators, spans, name, mesh = bridgeBuilder.selectSpans(20,
-                                                                                 "{}_{}_{}_{}".format(side[0], type[1],
-                                                                                                      support_number,
-                                                                                                      rope_name))
-            # Create a group for locators made from selectSpans
-            locators_group = cmds.group(locators,
-                                        n="{}_{}_{}_{}_LOC_GRP".format(side[0], type[1], support_number, rope_name))
-
-            # Select the first, middle and last locators for the curve and ctrl ik joints
-            cmds.select(locators[0::2])
-            curve, positions, ctrl_joints = bridgeBuilder.createCurve(
-                "{}_{}_{}_{}".format(side[0], type[1], support_number, rope_name))
-            new_ik_handle, new_ik_ctrl, new_pvector = bridgeBuilder.buildSupport(ctrl_joints)
-
-            joint_percentage_values = bridgeBuilder.setPositionPercentage(curve, locators)
-            motion_paths = bridgeBuilder.attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints,
-                                                            rotation=True, rope_type="support")
-
-            # Add stretchy IK to the ctrl joints
-            bridgeBuilder.addStretchyIK(ctrl_joints)
-
-            # Group the locators together by their parent groups
-            support_ctrl_jnt_GRPs = [i for i in cmds.listRelatives(ctrl_joints[0::], p=1) if
-                                     cmds.objectType(i) == "transform"]
-            support_ik_GRP = cmds.listRelatives(new_pvector, ap=1, f=1)[0].split("|")[1]
-            cmds.group(mesh, locators_group, support_ctrl_jnt_GRPs, curve, support_ik_GRP,
-                       name="{}_{}_{}_{}_GRP".format(side[0], type[1], support_number, rope_name))
-
-            bridgeBuilder.bindJoints(mesh, bind_joints)
-            bridgeBuilder.bindJoints(curve, ctrl_joints, rope_type=type[1])
-
-            support_number += 1
