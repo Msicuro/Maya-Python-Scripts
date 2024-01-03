@@ -1,9 +1,8 @@
 from PySide2 import QtWidgets, QtCore, QtGui
-import bridgeBuilder
 import maya.cmds as cmds
 from maya import OpenMayaUI as omui
 from shiboken2 import wrapInstance
-from functools import partial
+
 
 def getMayaMainWindow():
     window = omui.MQtUtil_mainWindow()
