@@ -16,6 +16,7 @@ def getMayaMainWindow():
     pointer = wrapInstance(long(window), QtWidgets.QMainWindow)
     return pointer
 
+
 class RopeUI(QtWidgets.QDialog):
     def __init__(self):
         parent = getMayaMainWindow()
@@ -160,7 +161,6 @@ class RopeUI(QtWidgets.QDialog):
         # Connect the Type combo box signal to control menu type visibility
         self.type_combo.activated.connect(self.typecomboboxCallback)
 
-
     def runSelectSpans(self):
         self.bind_joints, \
         self.locators, \
@@ -253,8 +253,6 @@ class RopeUI(QtWidgets.QDialog):
         # Turn off the rotations for motion paths after the function completes
         self.rotations_checkbox.setChecked(0)
 
-
-
     def checkCheckBoxes(self):
         '''
         Checks the "checked" status of each checkbox so they can be executed later
@@ -322,9 +320,6 @@ class RopeUI(QtWidgets.QDialog):
             self.type_widgets[key_name].setVisible(key_index == key)
 
         self.resize(QtWidgets.QWidget.minimumSizeHint(self))
-
-
-
 
 
 def showUI():
