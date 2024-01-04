@@ -1,5 +1,6 @@
 from maya import cmds as cmds
 import create_buffer_groups as buffer
+import logging
 
 #################################
 ##Steps to create a bridge rope##
@@ -9,6 +10,11 @@ import create_buffer_groups as buffer
 # Run the createCurve function
 # Run setPositionPercentage
 # Run attachToMotionPath
+
+# Set up logger config and current level
+logging.basicConfig()
+logger = logging.getLogger("BridgeBuilder")
+logger.setLevel(logging.INFO)
 
 def selectSpans(joint_name, verts_in_span=None):
     """
@@ -43,8 +49,9 @@ def selectSpans(joint_name, verts_in_span=None):
     elif cmds.objectType(shape_node, isType="mesh"):
         if not verts_in_span:
             verts_in_span = cmds.getAttr("{}.subdivisionsAxis".format(constructor))
-        print("CONSTUCTOR: {}".format(constructor))
-        print("VERTS IN SPAN: {}".format(verts_in_span))
+
+        logger.debug("CONSTUCTOR: {}".format(constructor))
+        logger.debug("VERTS IN SPAN: {}".format(verts_in_span))
         num_of_spans = int(len(all_verts) / verts_in_span)
 
         # Select vertices in bulk based on the number of vertices per span and create a joint at the center point before
@@ -90,8 +97,8 @@ def addLocators(joints, name=""):
             loc = cmds.spaceLocator(name="{}".format(i).replace("JNT", "LOC"))
         else:
             loc = cmds.spaceLocator(name="{}_LOC".format(name))
-        print("i: {}".format(i))
-        print("LOC: {}".format(loc))
+        logger.debug("i: {}".format(i))
+        logger.debug("LOC: {}".format(loc))
         cmds.delete(cmds.pointConstraint(i, loc))
         locators.append(loc[0])
 
@@ -139,10 +146,10 @@ def selectAllVerts():
     constructor_node = cmds.listHistory(selection)[1]
 
     if cmds.objectType(shape_node, isType="nurbsSurface"):
-        print "Selecting nurbs CVs"
+        logger.info("Selecting nurbs CVs")
         all_vertices = cmds.ls('{}.cv[*][*]'.format(shape_node), fl=True)
     elif cmds.objectType(shape_node, isType="mesh"):
-        print "Selecting mesh Vertices"
+        logger.info("Selecting mesh Vertices")
         all_vertices = cmds.ls('{}.vtx[*]'.format(shape_node), fl=True)
     else:
         raise Exception("Wrong lever! (Lever as in node type, please select a nurbsSurface or mesh)")
@@ -236,7 +243,7 @@ def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints=Non
     """
     curve_shape = cmds.listRelatives(curve, shapes=True)[0]
     motion_paths = []
-    print("ROPE TYPE: {}".format(rope_type))
+    logger.debug("ROPE TYPE: {}".format(rope_type))
 
     # Iterate through each joint and attach the motion path node with the corresponding percentage value as the uValue
     for i in range(len(locators)):
@@ -263,24 +270,24 @@ def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints=Non
             #Iterate through the control joints and match the transforms of the appropriate locator only if it's a main
             if "Main" in rope_type:
                 for c in range(len(ctrl_joints)):
-                    print(ctrl_joints)
+                    logger.debug(ctrl_joints)
                     ctrl_zero_group = cmds.listRelatives(ctrl_joints[c], parent=True)[0]
 
                     #Get the value right before "_CTRL" in the control joint and compare to the locator index
                     ctrl_index = ctrl_joints[c].find("_CTRL")
                     ctrl_index = ctrl_joints[c][ctrl_index-2:ctrl_index]
-                    print("CTRL INDEX: {}".format(ctrl_index))
+                    logger.debug("CTRL INDEX: {}".format(ctrl_index))
 
                     locator_index = locators[i].find("_LOC")
                     locator_index = locators[i][locator_index - 2:locator_index]
-                    print("LOCATOR INDEX: {}".format(i))
+                    logger.debug("LOCATOR INDEX: {}".format(i))
 
                     if ctrl_index == locator_index:
                         cmds.delete(cmds.parentConstraint(locators[i], ctrl_zero_group))
-                        print("SUCCESS")
+                        logger.debug("SUCCESS")
                         break
                     else:
-                        print("FAIL")
+                        logger.debug("FAIL")
 
             elif "Support" in rope_type:
                 #Create a new locator to use as the world up object for the motion path only on the top joint
@@ -291,7 +298,7 @@ def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints=Non
 
                     # Create the new locator to use as the Up Object for the motion paths
                     up_object = addLocators(first_joint)
-                    print("UP OBJECT: {}".format(up_object))
+                    logger.debug("UP OBJECT: {}".format(up_object))
 
                     # Rename the new locator
 
@@ -343,7 +350,7 @@ def createSupports(bind_joints, locators):
     cmds.select(locators[(len(locators) / 2) + 1], add=True)
     cmds.select(locators[-1], add=True)
 
-    print('Selections: {}'.format(cmds.ls(selection=True)))
+    logger.debug('Selections: {}'.format(cmds.ls(selection=True)))
     # Create the curve with the selected control joints
     curve, positions, ctrl_joints = createCurve()
     cmds.select(clear=True)
@@ -363,8 +370,8 @@ def createSupports(bind_joints, locators):
         # Create the motionPath node and connect the parameter value from the nPOC node into it
         motion_paths.append(cmds.createNode('motionPath', name='{}_motionPath'.format(locators[i])))
         cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.geometryPath'.format(motion_paths[i]))
-        print('Motion Path[{}]: {}'.format(i, motion_paths[i]))
-        print('Param: {}'.format(param))
+        logger.debug('Motion Path[{}]: {}'.format(i, motion_paths[i]))
+        logger.debug('Param: {}'.format(param))
         cmds.setAttr('{}.uValue'.format(motion_paths[i]), param)
 
         # Connect the motionPaths Coordinates and rotate attributes into the locator
@@ -397,8 +404,8 @@ def setupNPOCPath(curve, locators):
         # Create the motionPath node and connect the parameter value from the nPOC node into it
         motion_paths.append(cmds.createNode('motionPath', name='{}_motionPath'.format(locators[i])))
         cmds.connectAttr('{}.worldSpace[0]'.format(curve_shape), '{}.geometryPath'.format(motion_paths[i]))
-        print('Motion Path[{}]: {}'.format(i, motion_paths[i]))
-        print('Param: {}'.format(param))
+        logger.debug('Motion Path[{}]: {}'.format(i, motion_paths[i]))
+        logger.debug('Param: {}'.format(param))
         cmds.setAttr('{}.uValue'.format(motion_paths[i]), param)
 
         # Connect the motionPaths Coordinates attribute into the locator
@@ -554,8 +561,8 @@ def bindJoints(mesh, joints, rope_type=""):
     cmds.select(joints, mesh)
     skin_cluster = cmds.skinCluster()[0]
     if "Support" in rope_type:
-        print("CV: {}".format("{}.cv[-1]".format(mesh)))
-        print("CTRL JOINT: {}".format(joints[-1]))
+        logger.debug("CV: {}".format("{}.cv[-1]".format(mesh)))
+        logger.debug("CTRL JOINT: {}".format(joints[-1]))
         cmds.skinPercent(skin_cluster, "{}.cv[{}]".format(mesh, len(joints)), transformValue = [joints[-1], 1])
 
 
