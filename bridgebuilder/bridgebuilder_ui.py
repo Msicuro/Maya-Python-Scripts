@@ -273,7 +273,7 @@ class RopeUI(QtWidgets.QDialog):
         self.button_functions = []
 
         for i in rope_functions:
-            if i.isChecked() == True:
+            if i.isChecked():
                 self.button_functions.append(rope_functions[i])
         return rope_functions, self.button_functions
 

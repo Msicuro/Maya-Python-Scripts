@@ -47,7 +47,7 @@ def selectSpans(joint_name, verts_in_span=None):
             cmds.select(clear=True)
 
     elif cmds.objectType(shape_node, isType="mesh"):
-        if not verts_in_span:
+        if verts_in_span is not None:
             verts_in_span = cmds.getAttr("{}.subdivisionsAxis".format(constructor))
 
         logger.debug("CONSTUCTOR: {}".format(constructor))
