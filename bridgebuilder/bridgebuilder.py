@@ -450,11 +450,9 @@ def buildSupport(ctrl_joints, increment=0):
 
     # Point constrain the remaining group nodes above the two joints (which should be separate) to the appropriate ik control joints
     mid_joints = ctrl_joints[1::2]
-    inc = 0
-    for i in mid_joints:
-        top_parent = cmds.ls(i, long=True)[0].split('|')[1:-1][0]
-        cmds.pointConstraint(ik_joints[inc], ik_joints[inc + 1], top_parent)
-        inc += 1
+    for i, v in enumerate(mid_joints):
+        top_parent = cmds.ls(v, long=True)[0].split('|')[1:-1][0]
+        cmds.pointConstraint(ik_joints[i], ik_joints[i + 1], top_parent)
 
     # Create a curve control (or any control shape) and move it to the center control joint and away
     new_pvector = cmds.curve(n="{}{}_pVector".format(new_base_name, increment), d=1, p=[(0.5, 0.5, 0.5), (0.5, -0.5, 0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, 0.5), (0.5, 0.5, 0.5), (0.5, 0.5, -0.5), (0.5, -0.5, -0.5), (0.5, -0.5, 0.5), (-0.5, -0.5, 0.5), (-0.5, -0.5, -0.5), (0.5, -0.5, -0.5), (0.5, 0.5, -0.5), (-0.5, 0.5, -0.5), (-0.5, -0.5, -0.5), (-0.5, 0.5, -0.5), (-0.5, 0.5, 0.5)], k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
@@ -532,11 +530,11 @@ def createControls(ctrl_joints, name):
     Returns:
         controls: A list of created controls
     '''
-    inc = 1
+
     controls = []
-    for i in ctrl_joints:
-        new_circle = cmds.circle(n="{}_{}_CTRL".format(name, inc), c=(0, 0, 0), nr=(0, 1, 0), sw=360, r=1, d=3, ut=0, tol=0.01, s=8, ch=1)
-        cmds.delete(cmds.parentConstraint(i, new_circle[0]))
+    for i, v in enumerate(ctrl_joints):
+        new_circle = cmds.circle(n="{}_{}_CTRL".format(name, i), c=(0, 0, 0), nr=(0, 1, 0), sw=360, r=1, d=3, ut=0, tol=0.01, s=8, ch=1)
+        cmds.delete(cmds.parentConstraint(v, new_circle[0]))
 
         cmds.select("{}.cv[*]".format(new_circle[0]))
         cmds.rotate(0, 0, 90, r=1, os=1, fo=1)
@@ -544,7 +542,6 @@ def createControls(ctrl_joints, name):
 
         buffer.createTwo(new_circle[0])
         controls.append(new_circle[0])
-        inc += 1
 
     return controls
 

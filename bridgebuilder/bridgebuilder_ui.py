@@ -217,16 +217,15 @@ class RopeUI(QtWidgets.QDialog):
 
     def createSupportRopes(self):
         support_meshes = cmds.ls(sl=1)
-        mesh_num = 0
         # Turn on the rotation checkbox so the rotations on motion paths are enabled
         self.rotations_checkbox.setChecked(1)
 
         # Iterate through each selected mesh and create the support rope
-        for i in support_meshes:
-            name = "{}_{}_{}".format(self.name_combo.currentText(), self.name_line.text(), mesh_num,
+        for i, v in enumerate(support_meshes):
+            name = "{}_{}_{}".format(self.name_combo.currentText(), self.name_line.text(), i,
                                                                         self.type_combo.currentText())
 
-            cmds.select(i)
+            cmds.select(v)
             self.runSelectSpans()
             # Create the group for the locators
             loc_group = cmds.group(self.locators, name="{}_LOC_GRP".format(name))
@@ -248,9 +247,7 @@ class RopeUI(QtWidgets.QDialog):
             self.runBindJoints()
             self.runBindJoints()
 
-            mesh_num +=1
-
-        # Turn off the rotations for motion paths after the function completes
+        # Uncheck the rotations box for motion paths after the function completes so the UI is clean
         self.rotations_checkbox.setChecked(0)
 
     def checkCheckBoxes(self):
