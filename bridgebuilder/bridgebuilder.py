@@ -14,7 +14,7 @@ import logging
 # Set up logger config and current level
 logging.basicConfig()
 logger = logging.getLogger("BridgeBuilder")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 def selectSpans(joint_name, verts_in_span=None):
     """
@@ -47,10 +47,11 @@ def selectSpans(joint_name, verts_in_span=None):
             cmds.select(clear=True)
 
     elif cmds.objectType(shape_node, isType="mesh"):
-        if verts_in_span is not None:
+        # If verts_in_span is None, set it to the subdivisionsAxis from the constructor node
+        logger.debug("CONSTUCTOR: {}".format(constructor))
+        if not verts_in_span:
             verts_in_span = cmds.getAttr("{}.subdivisionsAxis".format(constructor))
 
-        logger.debug("CONSTUCTOR: {}".format(constructor))
         logger.debug("VERTS IN SPAN: {}".format(verts_in_span))
         num_of_spans = int(len(all_verts) / verts_in_span)
 
