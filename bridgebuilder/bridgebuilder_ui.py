@@ -1,8 +1,8 @@
-from PySide2 import QtWidgets, QtCore, QtGui
+from PySide6 import QtWidgets, QtCore, QtGui
 import maya.cmds as cmds
 from maya import OpenMayaUI as omui
 import bridgebuilder
-from shiboken2 import wrapInstance
+from shiboken6 import wrapInstance
 import logging
 
 # Set up logger config and current level
