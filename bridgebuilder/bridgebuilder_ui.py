@@ -1,7 +1,7 @@
 from PySide6 import QtWidgets, QtCore, QtGui
 import maya.cmds as cmds
 from maya import OpenMayaUI as omui
-import bridgebuilder
+import bridgebuilder.bridgebuilder_func as bridgebuilder_func
 from shiboken6 import wrapInstance
 import logging
 
@@ -167,7 +167,7 @@ class RopeUI(QtWidgets.QDialog):
         self.spans, \
         self.name, \
         self.mesh, \
-        self.constructor = bridgebuilder.selectSpans("{}_{}_{}".format(self.name_combo.currentText(),
+        self.constructor = bridgebuilder_func.selectSpans("{}_{}_{}".format(self.name_combo.currentText(),
                                                                        self.name_line.text(),
                                                                        self.type_combo.currentText()))
 
@@ -177,17 +177,17 @@ class RopeUI(QtWidgets.QDialog):
     def runCreateCurve(self):
         self.curv, \
         self.positions, \
-        self.ctrl_joints = bridgebuilder.createCurve("{}_{}_{}".format(self.name_combo.currentText(),
+        self.ctrl_joints = bridgebuilder_func.createCurve("{}_{}_{}".format(self.name_combo.currentText(),
                                                                        self.name_line.text(),
                                                                        self.type_combo.currentText()))
         return self.curv, self.positions, self.ctrl_joints
 
     def runSetPositionPercentage(self):
-        self.joint_percentages = bridgebuilder.setPositionPercentage(self.curv, self.locators)
+        self.joint_percentages = bridgebuilder_func.setPositionPercentage(self.curv, self.locators)
         return self.joint_percentages
 
     def runAttachMotionPaths(self):
-        self.motion_paths = bridgebuilder.attachToMotionPath(joint_percentage_values=self.joint_percentages,
+        self.motion_paths = bridgebuilder_func.attachToMotionPath(joint_percentage_values=self.joint_percentages,
                                                              curve=self.curv, locators=self.locators,
                                                              ctrl_joints=self.ctrl_joints,
                                                              rope_type=self.type_combo.currentText(),
@@ -204,16 +204,16 @@ class RopeUI(QtWidgets.QDialog):
         if self.bind_curve_checkbox.isChecked() and not self.bind_mesh_checkbox.isChecked():
             if not curve_skin_cluster:
                 logger.info("BIND CURVE")
-                bridgebuilder.bindJoints(mesh=self.curv, joints=self.ctrl_joints)
+                bridgebuilder_func.bindJoints(mesh=self.curv, joints=self.ctrl_joints)
         elif self.bind_mesh_checkbox.isChecked() and not self.bind_curve_checkbox.isChecked():
             if not mesh_skin_cluster:
                 logger.info("BIND MESH")
-                bridgebuilder.bindJoints(mesh=self.mesh, joints=self.bind_joints)
+                bridgebuilder_func.bindJoints(mesh=self.mesh, joints=self.bind_joints)
         else:
             if not mesh_skin_cluster and not curve_skin_cluster:
                 logger.info("BINDING CURVE AND MESH")
-                bridgebuilder.bindJoints(mesh=self.curv, joints=self.ctrl_joints)
-                bridgebuilder.bindJoints(mesh=self.mesh, joints=self.bind_joints)
+                bridgebuilder_func.bindJoints(mesh=self.curv, joints=self.ctrl_joints)
+                bridgebuilder_func.bindJoints(mesh=self.mesh, joints=self.bind_joints)
 
     def createSupportRopes(self):
         support_meshes = cmds.ls(sl=1)
@@ -233,12 +233,12 @@ class RopeUI(QtWidgets.QDialog):
             cmds.select(self.locators[0::2])
             self.runCreateCurve()
             # Run the build supports function
-            new_ik_handle, new_ik_ctrl, new_pvector = bridgebuilder.buildSupport(self.ctrl_joints)
+            new_ik_handle, new_ik_ctrl, new_pvector = bridgebuilder_func.buildSupport(self.ctrl_joints)
 
             self.runSetPositionPercentage()
             self.runAttachMotionPaths()
 
-            bridgebuilder.addStretchyIK(self.ctrl_joints)
+            bridgebuilder_func.addStretchyIK(self.ctrl_joints)
 
             support_ctrl_jnt_grps = [i for i in cmds.listRelatives(self.ctrl_joints[0::], p=1) if cmds.objectType(i) == "transform"]
             support_ik_GRP = cmds.listRelatives(new_pvector, ap=1, f=1)[0].split("|")[1]

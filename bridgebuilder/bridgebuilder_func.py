@@ -130,7 +130,7 @@ def createCurve(name=""):
         cmds.parent(i, zero)
 
     # Create the curve with CVs at the positions of the control joints
-    curve = cmds.curve(point=positions, n="{}_CRV".format(name))
+    curve = cmds.curve(degree=3, point=positions, n="{}_CRV".format(name))
 
     return curve, positions, control_joints
 
