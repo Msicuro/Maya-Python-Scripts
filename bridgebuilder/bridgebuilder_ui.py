@@ -12,8 +12,8 @@ logger.setLevel(logging.INFO)
 
 
 def getMayaMainWindow():
-    window = omui.MQtUtil_mainWindow()
-    pointer = wrapInstance(long(window), QtWidgets.QMainWindow)
+    window = omui.MQtUtil.mainWindow()
+    pointer = wrapInstance(int(window), QtWidgets.QMainWindow)
     return pointer
 
 
