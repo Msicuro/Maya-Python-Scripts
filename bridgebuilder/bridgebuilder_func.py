@@ -100,7 +100,7 @@ def addLocators(joints, name=""):
             loc = cmds.spaceLocator(name="{}_LOC".format(name))
         logger.debug("i: {}".format(i))
         logger.debug("LOC: {}".format(loc))
-        cmds.delete(cmds.pointConstraint(i, loc))
+        cmds.delete(cmds.parentConstraint(i, loc))
         locators.append(loc[0])
 
     return locators
@@ -134,7 +134,7 @@ def createCurve(name=""):
 
     return curve, positions, control_joints
 
-def selectAllVerts():
+def selectAllVerts(constructor_node=None):
     """
     Lists and returns all vertices on the selected mesh or nurbsSurface
     Returns:
@@ -144,7 +144,8 @@ def selectAllVerts():
     """
     selection = cmds.ls(selection=True)
     shape_node = cmds.listRelatives(selection, s=True)[0]
-    constructor_node = cmds.listHistory(selection)[1]
+    if not constructor_node:
+        constructor_node = cmds.listHistory(selection)[1]
 
     if cmds.objectType(shape_node, isType="nurbsSurface"):
         logger.info("Selecting nurbs CVs")
@@ -206,6 +207,8 @@ def setPositionPercentage(curve, locators):
     for i in range(len(locators)):
         #Create a temp transform node and move it to the locator position
         temp_transform = cmds.createNode('transform', name='temp_delete_transform')
+        print(cmds.objectType(temp_transform))
+        print(cmds.objectType(locators[i]))
         cmds.delete(cmds.parentConstraint(locators[i], temp_transform))
 
         # Create the arcLength and nearestPoint nodes and set/connect the appropriate attributes
@@ -230,7 +233,7 @@ def setPositionPercentage(curve, locators):
 
     return locator_percentage_values
 
-def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints=None, rope_type="main", rotation=False):
+def attachToMotionPath(joint_percentage_values, curve, locators, ctrl_joints=None, rope_type="Main", rotation=False):
     """
     Attaches a motion path node to the locators above each mesh joint using the percentage value from the
     setPositionPercentage function
